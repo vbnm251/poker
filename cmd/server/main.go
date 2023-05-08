@@ -1,7 +1,18 @@
 package main
 
-import "fmt"
+import (
+	"log"
+	"poker"
+	"poker/internal/handler"
+)
 
 func main() {
-	fmt.Println("Hello world")
+	//todo : add configuration
+
+	s := new(poker.Server)
+	h := handler.NewHandler()
+
+	if err := s.StartServer(":8080", h.InitEndpoints()); err != nil {
+		log.Fatal(err.Error())
+	}
 }

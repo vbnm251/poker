@@ -1,6 +1,6 @@
 /*
 The game:
-	1.Rotate players
+	1. Rotate players
 	2. Shuffle deck
 	3. Distribution
 	4. PreFlop: waiting for players' bets
@@ -252,7 +252,7 @@ func (g *Game) ShuffleDeck() {
 
 func (g *Game) GetRealLength() int {
 	cnt := 0
-	for i := 1; i <= MaxPlayers; i++ {
+	for i := 0; i < MaxPlayers; i++ {
 		if g.Players[i] != nil {
 			cnt++
 		}
