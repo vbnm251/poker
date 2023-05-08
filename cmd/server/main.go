@@ -1,18 +1,26 @@
 package main
 
 import (
+	"github.com/BurntSushi/toml"
 	"log"
 	"poker"
 	"poker/internal/handler"
 )
 
+type Config struct {
+	Addr string `toml:"addr"`
+}
+
 func main() {
-	//todo : add configuration
+	var cfg Config
+	if _, err := toml.DecodeFile("config.toml", &cfg); err != nil {
+		log.Fatal(err)
+	}
 
 	s := new(poker.Server)
 	h := handler.NewHandler()
 
-	if err := s.StartServer(":8080", h.InitEndpoints()); err != nil {
+	if err := s.StartServer(cfg.Addr, h.InitEndpoints()); err != nil {
 		log.Fatal(err.Error())
 	}
 }
