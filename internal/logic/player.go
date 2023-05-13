@@ -1,7 +1,7 @@
 package logic
 
 type Player struct {
-	Username    string
+	Username    string `json:"username"`
 	Position    int
 	Role        string
 	Balance     int

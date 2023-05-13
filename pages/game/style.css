@@ -1,0 +1,228 @@
+body {
+    background-color: #00796B;
+    align-content: center;
+}
+
+.spacer-vertical {
+    width: 10px;
+}
+
+.table {
+    background-color: #33691E;
+    width: 1280px;
+    height: 720px;
+    border-radius: 10%;
+    margin: 50px auto;
+    border: 20px solid #251002
+}
+
+#dealer-theme1 {
+    position: absolute;
+    top: -6%;
+    left: 50%;
+    width: 512px;
+    height: 180px;
+    border-radius: 50%;
+    background-color: #00796B;
+    transform: translateX(-50%);
+}
+
+#dealer-theme2 {
+    position: absolute;
+    top: 0%;
+    left: 50%;
+    width: 600px;    
+    height: 50px;
+    background-color: #00796B;
+    transform: translateX(-50%);
+}
+
+#dealer {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 90px;
+    background-color: #000000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: bold;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+    color: #FFD600;
+}
+
+#bank {
+    position: absolute;
+    top: 32%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 10%;
+    background-color: #025412ae;
+    padding: 5px 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+    color: #FFD600;
+}
+
+#player1 {
+    position: absolute;
+    top: 15%;
+    left: 25%;
+}
+
+#player2 {
+    position: absolute;
+    top: 40%;
+    left: 15%;
+}
+
+#player3 {
+    position: absolute;
+    bottom: 23%;
+    left: 25%;
+}
+
+#player4 {
+    position: absolute;
+    bottom: 23%;
+    right: 25%;
+}
+
+#player5 {
+    position: absolute;
+    top: 40%;
+    right: 15%;
+}
+
+#player6 {
+    position: absolute;
+    top: 15%;
+    right: 25%;
+}
+
+.card{
+    width: 84px;
+    height: 120px;
+    background-color: white;
+    border: 2px solid black;
+    text-shadow: 1px 1px white;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.info-left {
+    position: absolute;
+    left: 10%;
+}
+
+.info-right{
+    position: absolute;
+    right: 10%;
+}
+
+.username {
+    margin-top: 10px;
+    font-size: 25px;
+    font-weight: bold;
+    color: #ffffff;
+    max-width: 100px;
+}
+
+.total-money {
+    font-size: 17px;
+    color: #bdbdbd;
+    margin-top: 4px;
+}
+
+.current-bet{
+    background-color: #025412ae;
+    border-radius: 20%;
+    padding: 2px 4px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #FFD600;
+    display: flex;
+    align-items: center;
+}
+
+.card1{
+    transform: rotate(-10deg);
+}
+
+.card2{
+    transform: rotate(10deg);
+}
+
+.player-cards{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.player-card-right{
+    margin-right: -30px;
+}
+
+.player-card-left{
+    margin-left: -30px;
+}
+
+.table-card {
+    margin-right: 10px;
+}
+
+#table-cards {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;  
+}
+
+#self-player{
+    position: absolute;
+    left: 50%;
+    top: 70%;
+    transform: translateX(-50%);
+}
+
+.buttons{
+    margin-top: 8%;
+    display: flex;
+}
+
+button {
+    padding: 10px 20px;
+    width: 100px;
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+  
+.button-call {
+    background-color: green;
+    color: white;
+}
+  
+.button-raise {
+    margin: 0 4px;
+    background-color: yellow;
+    color: black;
+}
+  
+.button-fold {
+    background-color: red;
+    color: white;
+    
+}

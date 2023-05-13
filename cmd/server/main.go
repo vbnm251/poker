@@ -18,7 +18,7 @@ func main() {
 	}
 
 	s := new(poker.Server)
-	h := handler.NewHandler()
+	h := handler.NewHandler(cfg.Addr)
 
 	if err := s.StartServer(cfg.Addr, h.InitEndpoints()); err != nil {
 		log.Fatal(err.Error())

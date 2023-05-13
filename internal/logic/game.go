@@ -30,48 +30,38 @@ const Dealer = "dealer"
 const Regular = "regular"
 
 type Game struct {
-	Id                string
-	IsGameLive        bool
-	PossibleToConnect bool
-	SmallBlindID      int
-	Players           []*Player
-	Deck              []Card
-	DeckInd           int
-	Table             [5]Card
-	CurrentBet        int
-	Bank              int
+	IsGameLive   bool
+	SmallBlindID int
+	Players      []*Player
+	Deck         []Card
+	DeckInd      int
+	Table        [5]Card
+	CurrentBet   int
+	Bank         int
 }
 
-func NewGame(creator *Player) *Game {
-	creator.Role = SmallBlind
-	creator.Position = 0
-
-	game := &Game{
-		Id:                GenerateID(),
-		IsGameLive:        false,
-		PossibleToConnect: true,
-		SmallBlindID:      0,
-		Players:           make([]*Player, 7),
-		Deck:              GenerateDeck(),
-		Table:             [5]Card{},
-		DeckInd:           0,
-		Bank:              0,
-		CurrentBet:        0,
+func NewGame() *Game {
+	return &Game{
+		IsGameLive:   false,
+		SmallBlindID: 0,
+		Players:      make([]*Player, 7),
+		Deck:         GenerateDeck(),
+		Table:        [5]Card{},
+		DeckInd:      0,
+		Bank:         0,
+		CurrentBet:   0,
 	}
-
-	game.Players[0] = creator
-
-	return game
 }
 
 // JoinGame Return Free position and error in case there are max players in the game
 func (g *Game) JoinGame(player *Player) (int, error) {
 	if len(g.Players) == MaxPlayers {
-		g.PossibleToConnect = false
 		return 0, errors.New("the game is full")
 	}
 
 	switch g.GetRealLength() {
+	case 0:
+		player.Role = SmallBlind
 	case 1:
 		player.Role = BigBlind
 	case 2:
@@ -258,9 +248,4 @@ func (g *Game) GetRealLength() int {
 		}
 	}
 	return cnt
-}
-
-// GenerateID TODO
-func GenerateID() string {
-	return "id"
 }
