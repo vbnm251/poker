@@ -1,23 +1,27 @@
 const randomGameBtn = document.getElementById('randomGameBtn');
-const gameCodeBtn = document.getElementById('gameCodeBtn');
+const gameCodeBtn = document.getElementById('gameCodeBtn'); //TODO
 
+const usernameInput = document.getElementById('username')
+
+// Code for connecting to a random game
 randomGameBtn.addEventListener('click', function() {
-  // Code for connecting to a random game
-  const data = { username: "example" };
   const url = "http://localhost:8080/random"
-
-  fetch(url, {
-    method: 'POST',
-    headers: {
-      'Connection' : 'upgrade',
-      'Upgrade': 'websocket',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  }).then(response => {
-    // Обработка ответа
-  }).catch(error => {
-    // Обработка ошибок
-  });
+  if (usernameInput.value === '') {
+    alert('Пожалуйста, заполните поле "Username"!');
+  } else {
+    fetch(url, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    }).then(response => response.json())
+        .then(data => {
+            sessionStorage.setItem('username', usernameInput.value);
+            const gameID = data.id;
+            window.location.href = `/connect?id=${gameID}`;
+        })
+        .catch(error => {
+          console.error(error);
+        });
+  }
 
 });

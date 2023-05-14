@@ -21,28 +21,38 @@ func NewHandler(addr string) *Handler {
 func (h *Handler) InitEndpoints() *mux.Router {
 	r := mux.NewRouter()
 
+	r.HandleFunc("/random", h.ConnectRandomGameEndpoint)
+	r.HandleFunc("/connect", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "pages/game/index.html")
+	}).Queries("id", "{id}")
+	r.HandleFunc("/ws", h.WebsocketsEndpoint).Queries("id", "{id}")
+
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "pages/main/index.html")
 	})
 
-	r.HandleFunc("/pages/main/script.js", func(w http.ResponseWriter, r *http.Request) {
+	//FILE HANDLERS
+	pages := r.PathPrefix("/pages").Subrouter()
+
+	pages.HandleFunc("/main/script.js", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "pages/main/script.js")
 	})
 
-	r.HandleFunc("/pages/main/style.css", func(w http.ResponseWriter, r *http.Request) {
+	pages.HandleFunc("/main/style.css", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "pages/main/style.css")
 	})
 
-	r.HandleFunc("/pages/game/style.css", func(w http.ResponseWriter, r *http.Request) {
+	pages.HandleFunc("/game/style.css", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "pages/game/style.css")
 	})
 
-	r.HandleFunc("/pages/game/poker-chip.png", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "pages/game/poker-chip.png")
+	pages.HandleFunc("/game/script.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "pages/game/script.js")
 	})
 
-	r.HandleFunc("/random", h.ConnectRandomGameEndpoint)
-	r.HandleFunc("/connect", h.WebsocketsEndpoint).Queries("id", "{id}")
+	pages.HandleFunc("/game/poker-chip.png", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "pages/game/poker-chip.png")
+	})
 
 	return r
 }

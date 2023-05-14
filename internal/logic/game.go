@@ -41,24 +41,25 @@ type Game struct {
 }
 
 func NewGame() *Game {
-	return &Game{
+	game := &Game{
 		IsGameLive:   false,
 		SmallBlindID: 0,
-		Players:      make([]*Player, 7),
+		Players:      make([]*Player, MaxPlayers),
 		Deck:         GenerateDeck(),
 		Table:        [5]Card{},
 		DeckInd:      0,
 		Bank:         0,
 		CurrentBet:   0,
 	}
+	for i := 0; i < MaxPlayers; i++ {
+		game.Players[i] = nil
+	}
+
+	return game
 }
 
 // JoinGame Return Free position and error in case there are max players in the game
 func (g *Game) JoinGame(player *Player) (int, error) {
-	if len(g.Players) == MaxPlayers {
-		return 0, errors.New("the game is full")
-	}
-
 	switch g.GetRealLength() {
 	case 0:
 		player.Role = SmallBlind
@@ -66,13 +67,15 @@ func (g *Game) JoinGame(player *Player) (int, error) {
 		player.Role = BigBlind
 	case 2:
 		player.Role = Dealer
+	case MaxPlayers:
+		return 0, errors.New("the game is full")
 	default:
 		player.Role = Regular
 	}
 
 	var freePosition int
 	for i := 0; i < MaxPlayers; i++ {
-		if g.Players[i] != nil {
+		if g.Players[i] == nil {
 			freePosition = i
 			break
 		}
@@ -227,10 +230,12 @@ func (g *Game) DefineWinners() []*Player {
 
 func (g *Game) Distribution() {
 	for i := range g.Players {
-		g.Players[i].Cards[0] = g.Deck[g.DeckInd]
-		g.DeckInd++
-		g.Players[i].Cards[1] = g.Deck[g.DeckInd]
-		g.DeckInd++
+		if g.Players[i] != nil {
+			g.Players[i].Cards[0] = g.Deck[g.DeckInd]
+			g.DeckInd++
+			g.Players[i].Cards[1] = g.Deck[g.DeckInd]
+			g.DeckInd++
+		}
 	}
 }
 

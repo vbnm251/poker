@@ -1,7 +1,10 @@
 package logic
 
+import "github.com/gorilla/websocket"
+
 type Player struct {
-	Username    string `json:"username"`
+	Username    string
+	Conn        *websocket.Conn
 	Position    int
 	Role        string
 	Balance     int
@@ -12,8 +15,9 @@ type Player struct {
 	Kicker      Card
 }
 
-func NewPlayer(username string, balance int) Player {
+func NewPlayer(username string, balance int, conn *websocket.Conn) Player {
 	return Player{
+		Conn:     conn,
 		Username: username,
 		Balance:  balance,
 		InGame:   false,

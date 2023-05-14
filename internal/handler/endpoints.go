@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 	"poker/internal/logic"
@@ -11,30 +11,30 @@ func (h *Handler) ConnectRandomGameEndpoint(w http.ResponseWriter, r *http.Reque
 	log.Println("Congratulations")
 
 	gameID := "хуй"
-
 	for id, game := range h.Games {
 		if len(game.Players) != logic.MaxPlayers {
 			gameID = id
 		}
 	}
-
 	if gameID == "хуй" {
 		gameID = GenerateID()
 		h.Games[gameID] = logic.NewGame()
 	}
 
-	_, _ = w.Write([]byte(fmt.Sprintf(`
-	<!DOCTYPE html>
-		<html lang="en">
-			<head>
-				<meta charset="UTF-8">
-				<title>Redirect Page</title>
-				<script>
-					window.location.href = "/connect?id=%s";
-				</script>
-			</head>
-		</html> `,
-		gameID)))
+	response, err := json.Marshal(map[string]interface{}{
+		"id": gameID,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // GenerateID TODO
