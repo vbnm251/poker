@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/mitchellh/mapstructure"
 	"log"
@@ -21,10 +22,6 @@ type WsInput struct {
 	Data   map[string]interface{} `json:"data"`
 }
 
-type NewPlayer struct {
-	Username string `mapstructure:"username"`
-}
-
 func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -39,7 +36,7 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	gameID := r.URL.Query().Get("id")
 	if h.Games[gameID] == nil {
-		StatusResponse("Game does not exists", conn)
+		StatusResponse(fmt.Sprintf("Game %s does not exists", gameID), conn)
 		return
 	}
 
@@ -54,11 +51,13 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 
 		switch input.Action {
 		case "new_player":
-			var pl NewPlayer
+			var pl logic.Player
 			if err := mapstructure.Decode(input.Data, &pl); err != nil {
 				log.Println(err)
 				continue
 			}
+
+			log.Printf("Player %s connected to game %s\n", pl.Username, gameID)
 
 			player := logic.NewPlayer(pl.Username, 5000, conn)
 			pos, err := h.Games[gameID].JoinGame(&player)
@@ -72,7 +71,8 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 				h.SendToAllPlayers(gameID, data)
 			}
 		default:
-			log.Println("invalid action")
+			StatusResponse("invalid action", conn)
+			continue
 		}
 	}
 }

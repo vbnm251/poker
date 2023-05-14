@@ -2,14 +2,11 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"poker/internal/logic"
 )
 
 func (h *Handler) ConnectRandomGameEndpoint(w http.ResponseWriter, r *http.Request) {
-	log.Println("Congratulations")
-
 	gameID := "хуй"
 	for id, game := range h.Games {
 		if len(game.Players) != logic.MaxPlayers {

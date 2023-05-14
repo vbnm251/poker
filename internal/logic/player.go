@@ -3,7 +3,7 @@ package logic
 import "github.com/gorilla/websocket"
 
 type Player struct {
-	Username    string
+	Username    string `mapstructure:"username"`
 	Conn        *websocket.Conn
 	Position    int
 	Role        string
@@ -45,7 +45,7 @@ func (p *Player) GetCombination(table [5]Card) {
 
 	combinationFound := false
 
-	combinations := [9]func([5]Card, *bool){
+	combinations := [10]func([5]Card, *bool){
 		p.FlushRoyalCheck,
 		p.StraightFlushCheck,
 		p.FourOfAKindCheck,
@@ -55,6 +55,7 @@ func (p *Player) GetCombination(table [5]Card) {
 		p.SetCheck,
 		p.TwoPairCheck,
 		p.PairCheck,
+		p.HighCardCheck,
 	}
 
 	for i := 0; i < len(combinations); i++ {
@@ -63,9 +64,5 @@ func (p *Player) GetCombination(table [5]Card) {
 		if combinationFound {
 			break
 		}
-	}
-
-	if !combinationFound {
-		p.Combination = HighCard{HighCard: p.Kicker}
 	}
 }

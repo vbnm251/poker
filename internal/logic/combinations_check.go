@@ -256,6 +256,15 @@ func (p *Player) PairCheck(table [5]Card, combinationFound *bool) {
 	}
 }
 
+func (p *Player) HighCardCheck(table [5]Card, combinationFound *bool) {
+	if p.Cards[0].Value > p.Cards[1].Value {
+		p.Combination = HighCard{HighCard: p.Cards[0]}
+	} else {
+		p.Combination = HighCard{HighCard: p.Cards[1]}
+	}
+	*combinationFound = true
+}
+
 func (p *Player) FindKicker(table [5]Card) {
 	kicker := Card{Suit: "", Value: 0}
 
