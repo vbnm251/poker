@@ -30,14 +30,14 @@ const Dealer = "dealer"
 const Regular = "regular"
 
 type Game struct {
-	IsGameLive   bool
-	SmallBlindID int
-	Players      []*Player
-	Deck         []Card
-	DeckInd      int
-	Table        [5]Card
-	CurrentBet   int
-	Bank         int
+	IsGameLive   bool      `json:"live"`
+	SmallBlindID int       `json:"-"`
+	Players      []*Player `json:"players"`
+	Deck         []Card    `json:"-"`
+	Table        [5]Card   `json:"table"`
+	CurrentBet   int       `json:"current_bet"`
+	Bank         int       `json:"bank"`
+	DeckInd      int       `json:"-"`
 }
 
 func NewGame() *Game {

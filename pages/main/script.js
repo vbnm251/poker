@@ -5,7 +5,7 @@ const usernameInput = document.getElementById('username')
 
 // Code for connecting to a random game
 randomGameBtn.addEventListener('click', function() {
-  const url = "http://localhost:8080/random"
+  const url = "http://localhost:8080/api/random"
   if (usernameInput.value === '') {
     alert('Пожалуйста, заполните поле "Username"!');
   } else {

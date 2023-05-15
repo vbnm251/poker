@@ -3,16 +3,16 @@ package logic
 import "github.com/gorilla/websocket"
 
 type Player struct {
-	Username    string `mapstructure:"username"`
-	Conn        *websocket.Conn
+	Username    string `json:"username" mapstructure:"username"`
 	Position    int
 	Role        string
 	Balance     int
 	CurrentBet  int
 	InGame      bool
-	Cards       []Card
-	Combination interface{}
-	Kicker      Card
+	Conn        *websocket.Conn `json:"-"`
+	Cards       []Card          `json:"-"`
+	Combination interface{}     `json:"-"`
+	Kicker      Card            `json:"-"`
 }
 
 func NewPlayer(username string, balance int, conn *websocket.Conn) Player {

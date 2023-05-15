@@ -12,6 +12,7 @@ func GenerateDeck() []Card {
 	for _, suit := range []string{Spades, Diamonds, Clubs, Hearts} {
 		for val := 2; val <= 14; val++ {
 			deck[i] = Card{Value: val, Suit: suit}
+			i++
 		}
 	}
 

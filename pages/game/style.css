@@ -25,6 +25,7 @@ body {
     border-radius: 50%;
     background-color: #00796B;
     transform: translateX(-50%);
+    border: 20px solid #251002;
 }
 
 #dealer-theme2 {
@@ -208,6 +209,7 @@ button {
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
+    border: 2px solid black;
 }
   
 .button-call {

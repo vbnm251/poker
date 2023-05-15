@@ -7,6 +7,7 @@ import (
 )
 
 func (h *Handler) ConnectRandomGameEndpoint(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	gameID := "хуй"
 	for id, game := range h.Games {
 		if len(game.Players) != logic.MaxPlayers {
@@ -26,10 +27,27 @@ func (h *Handler) ConnectRandomGameEndpoint(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(response)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) GetGameInfoHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	gameID := r.URL.Query().Get("id")
+	if gameID == "" || h.Games[gameID] == nil {
+		ErrorResponse(w, "game does not exist", http.StatusBadRequest)
+		return
+	}
+	response, err := json.Marshal(h.Games[gameID])
+	if err != nil {
+		ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if _, err = w.Write(response); err != nil {
+		ErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }

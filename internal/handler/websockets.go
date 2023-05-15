@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/mitchellh/mapstructure"
 	"log"
 	"net/http"
 	"poker/internal/logic"
@@ -40,39 +39,28 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Client connected to game", gameID)
+	var pl logic.Player
+	if err := conn.ReadJSON(&pl); err != nil {
+		log.Println(err)
+		return
+	}
+
+	log.Printf("Player %s connected to game %s\n", pl.Username, gameID)
+
+	player := logic.NewPlayer(pl.Username, 5000, conn)
+	pos, err := h.Games[gameID].JoinGame(&player)
+	if err != nil {
+		StatusResponse("Already max players", conn)
+	} else {
+		data := map[string]interface{}{
+			"event":    "new_player",
+			"position": pos,
+		}
+		h.SendToAllPlayers(gameID, data)
+	}
 
 	for {
-		var input WsInput
-		if err := conn.ReadJSON(&input); err != nil {
-			log.Println(err)
-			return
-		}
-
-		switch input.Action {
-		case "new_player":
-			var pl logic.Player
-			if err := mapstructure.Decode(input.Data, &pl); err != nil {
-				log.Println(err)
-				continue
-			}
-
-			log.Printf("Player %s connected to game %s\n", pl.Username, gameID)
-
-			player := logic.NewPlayer(pl.Username, 5000, conn)
-			pos, err := h.Games[gameID].JoinGame(&player)
-			if err != nil {
-				StatusResponse("Already max players", conn)
-			} else {
-				data := map[string]interface{}{
-					"event":    "new_player",
-					"position": pos,
-				}
-				h.SendToAllPlayers(gameID, data)
-			}
-		default:
-			StatusResponse("invalid action", conn)
-			continue
-		}
+		//todo: main websocket loop
+		//game logic here
 	}
 }

@@ -1,17 +1,28 @@
 const urlParams = new URLSearchParams(window.location.search);
+const host = window.location.host
 const gameID = urlParams.get('id');
-const socket = new WebSocket(`ws://localhost:8080/ws?id=${gameID}`);
 const username = sessionStorage.getItem('username')
+
+const socket = new WebSocket(`ws://${host}/api/ws?id=${gameID}`);
 
 // обработчик события открытия соединения
 socket.addEventListener('open', (event) => {
     console.log('WebSocket connection established');
     socket.send(`{
-    "action" : "new_player",
-    "data" : {
-        "username" : "${username}"
-    }
-}`)
+            "username" : "${username}"
+        }`
+    )
+    fetch(`http://${host}/api/gameInfo?id=${gameID}`, {
+        headers: {
+            'Content-Type': 'application/json'
+        },
+    }).then(response => response.json())
+        .then(data => {
+            console.log(data)
+        })
+        .catch(error => {
+            console.error(error);
+        });
 });
 
 // обработчик события получения сообщения от сервера
