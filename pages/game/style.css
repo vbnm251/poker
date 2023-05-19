@@ -7,7 +7,7 @@ body {
     width: 10px;
 }
 
-.table {
+#table {
     background-color: #33691E;
     width: 1280px;
     height: 720px;
@@ -92,19 +92,19 @@ body {
     left: 25%;
 }
 
-#player4 {
+#player5 {
     position: absolute;
     bottom: 23%;
     right: 25%;
 }
 
-#player5 {
+#player6 {
     position: absolute;
     top: 40%;
     right: 15%;
 }
 
-#player6 {
+#player0 {
     position: absolute;
     top: 15%;
     right: 25%;

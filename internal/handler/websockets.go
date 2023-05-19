@@ -39,28 +39,29 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pl logic.Player
-	if err := conn.ReadJSON(&pl); err != nil {
+	var player logic.Player
+	if err := conn.ReadJSON(&player); err != nil {
 		log.Println(err)
 		return
 	}
-
-	log.Printf("Player %s connected to game %s\n", pl.Username, gameID)
-
-	player := logic.NewPlayer(pl.Username, 5000, conn)
+	player = logic.NewPlayer(player.Username, 5000, conn)
 	pos, err := h.Games[gameID].JoinGame(&player)
 	if err != nil {
 		StatusResponse("Already max players", conn)
+		return
 	} else {
 		data := map[string]interface{}{
-			"event":    "new_player",
-			"position": pos,
+			"event":  "new_player",
+			"player": player,
 		}
 		h.SendToAllPlayers(gameID, data)
 	}
+	log.Printf("Player %s connected to game %s\n", player.Username, gameID)
+	defer func() {
+		log.Println("DELETED")
+		h.Games[gameID].QuitGame(pos)
+	}()
 
 	for {
-		//todo: main websocket loop
-		//game logic here
 	}
 }

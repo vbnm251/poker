@@ -82,16 +82,13 @@ func (g *Game) JoinGame(player *Player) (int, error) {
 	}
 
 	g.Players[freePosition] = player
+	player.Position = freePosition
 
 	return freePosition, nil
 }
 
 func (g *Game) QuitGame(pos int) {
-	for i, p := range g.Players {
-		if p.Position == pos {
-			g.Players[i] = nil
-		}
-	}
+	g.Players[pos] = nil
 }
 
 func (g *Game) RotateRoles() {

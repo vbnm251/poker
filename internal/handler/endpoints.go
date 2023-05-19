@@ -10,7 +10,7 @@ func (h *Handler) ConnectRandomGameEndpoint(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 	gameID := "хуй"
 	for id, game := range h.Games {
-		if len(game.Players) != logic.MaxPlayers {
+		if game.GetRealLength() != logic.MaxPlayers {
 			gameID = id
 		}
 	}

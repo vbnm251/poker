@@ -3,7 +3,7 @@ package logic
 import "github.com/gorilla/websocket"
 
 type Player struct {
-	Username    string `json:"username" mapstructure:"username"`
+	Username    string `mapstructure:"username" json:"username"`
 	Position    int
 	Role        string
 	Balance     int
