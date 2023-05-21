@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// SendToAllPlayers sends data to every player
 func (h *Handler) SendToAllPlayers(gameID string, data map[string]interface{}) {
 	for _, player := range h.Games[gameID].Players {
 		if player != nil {

@@ -2,6 +2,20 @@ package logic
 
 import "github.com/gorilla/websocket"
 
+type Action struct {
+	Action string `json:"action"`
+	Sum    int    `json:"sum"`
+}
+
+const (
+	Fold  = "fold"
+	Bet   = "bet"
+	Raise = "raise"
+)
+
+// Player struct describes the usual poker player
+// It has all methods to know the best combination
+// They are described in combinations_check.go in this directory
 type Player struct {
 	Username    string `mapstructure:"username" json:"username"`
 	Position    int

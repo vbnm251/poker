@@ -1,4 +1,6 @@
 /*
+This package contains all classic poker logic
+
 The game:
 	1. Rotate players
 	2. Shuffle deck
@@ -29,8 +31,10 @@ const SmallBlind = "small_blind"
 const Dealer = "dealer"
 const Regular = "regular"
 
+// Game contains all game information
+// It provides all methods for running poker game
 type Game struct {
-	IsGameLive   bool      `json:"live"`
+	Live         bool      `json:"live"`
 	SmallBlindID int       `json:"-"`
 	Players      []*Player `json:"players"`
 	Deck         []Card    `json:"-"`
@@ -42,7 +46,7 @@ type Game struct {
 
 func NewGame() *Game {
 	game := &Game{
-		IsGameLive:   false,
+		Live:         false,
 		SmallBlindID: 0,
 		Players:      make([]*Player, MaxPlayers),
 		Deck:         GenerateDeck(),
@@ -225,6 +229,23 @@ func (g *Game) DefineWinners() []*Player {
 	return winners
 }
 
+// CheckPlayers returns true and a winner in case game contains at least 2 players
+// In other way it returns false
+func (g *Game) CheckPlayers() (bool, *Player) {
+	inGamePlayers := 0
+	var pl *Player
+	for _, player := range g.Players {
+		if player != nil && player.InGame {
+			inGamePlayers++
+			pl = player
+		}
+	}
+	if inGamePlayers == 1 {
+		return false, pl
+	}
+	return true, nil
+}
+
 func (g *Game) Distribution() {
 	for i := range g.Players {
 		if g.Players[i] != nil {
@@ -240,6 +261,27 @@ func (g *Game) ShuffleDeck() {
 	rand.Shuffle(len(g.Deck), func(i, j int) {
 		g.Deck[i], g.Deck[j] = g.Deck[j], g.Deck[i]
 	})
+}
+
+func (g *Game) TableCards() {
+	for i := 0; i < 5; i++ {
+		g.Table[i] = g.Deck[g.DeckInd]
+		g.DeckInd++
+	}
+}
+
+// StartGame sends role and hand to every player
+func (g *Game) StartGame() {
+	for _, player := range g.Players {
+		if player != nil {
+			data := map[string]interface{}{
+				"event": "distribution",
+				"role":  player.Role,
+				"cards": player.Cards,
+			}
+			_ = player.Conn.WriteJSON(data)
+		}
+	}
 }
 
 func (g *Game) GetRealLength() int {

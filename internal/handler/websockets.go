@@ -63,5 +63,58 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	for {
+		if h.Games[gameID].GetRealLength() >= 2 {
+			h.Games[gameID].Live = true
+		}
+		//GAME LOOP
+		for {
+			if !h.Games[gameID].Live {
+				break
+			}
+
+			// This actions must be done only once
+			// So it happens only in small blind player
+			if player.Role == logic.SmallBlind {
+				h.Games[gameID].RotateRoles()
+				h.Games[gameID].ShuffleDeck()
+				h.Games[gameID].Distribution()
+				h.Games[gameID].TableCards()
+				h.Games[gameID].StartGame()
+
+				//PREFLOP
+				data := map[string]interface{}{
+					"event": "preflop",
+					"cards": [3]logic.Card{
+						h.Games[gameID].Table[0],
+						h.Games[gameID].Table[1],
+						h.Games[gameID].Table[2],
+					},
+				}
+				h.SendToAllPlayers(gameID, data)
+
+			}
+			//todo add queue
+			var action logic.Action
+			if err := conn.ReadJSON(&action); err != nil {
+				log.Println(err)
+				break
+			}
+			if action.Action == logic.Fold {
+				player.InGame = false
+			} else {
+				player.CurrentBet = action.Sum
+				if action.Action == logic.Raise {
+					h.Games[gameID].CurrentBet = action.Sum
+				}
+			}
+
+			// check if at least one player
+			if f, pl := h.Games[gameID].CheckPlayers(); !f && player.Role == logic.SmallBlind {
+				_ = pl.Conn.WriteJSON(map[string]interface{}{
+					"status": "WINNER",
+				})
+			}
+
+		}
 	}
 }
