@@ -1,6 +1,9 @@
 package logic
 
-import "github.com/gorilla/websocket"
+import (
+	"github.com/gorilla/websocket"
+	"sync"
+)
 
 type Action struct {
 	Action string `json:"action"`
@@ -9,7 +12,7 @@ type Action struct {
 
 const (
 	Fold  = "fold"
-	Bet   = "bet"
+	Call  = "call"
 	Raise = "raise"
 )
 
@@ -24,6 +27,7 @@ type Player struct {
 	CurrentBet  int
 	InGame      bool
 	Conn        *websocket.Conn `json:"-"`
+	Mu          *sync.Mutex     `json:"-"`
 	Cards       []Card          `json:"-"`
 	Combination interface{}     `json:"-"`
 	Kicker      Card            `json:"-"`
@@ -33,6 +37,7 @@ func NewPlayer(username string, balance int, conn *websocket.Conn) Player {
 	return Player{
 		Conn:     conn,
 		Username: username,
+		Mu:       &sync.Mutex{},
 		Balance:  balance,
 		InGame:   false,
 		Cards:    make([]Card, 2),
@@ -79,4 +84,10 @@ func (p *Player) GetCombination(table [5]Card) {
 			break
 		}
 	}
+}
+
+func (p *Player) SendMessage(v interface{}) error {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	return p.Conn.WriteJSON(v)
 }

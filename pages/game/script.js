@@ -5,7 +5,7 @@ const username = sessionStorage.getItem('username')
 console.log("Username is", username)
 
 const socket = new WebSocket(`ws://${host}/api/ws?id=${gameID}`);
-let playerPosition = 0;
+let playerPosition = -1;
 
 // обработчик события открытия соединения
 socket.addEventListener('open', (event) => {
@@ -37,14 +37,27 @@ socket.addEventListener('message', (event) => {
     const message = JSON.parse(event.data);
     console.log(`Message is ${event.data}`)
 
-    if (message["player"]["username"] === username) {
-        playerPosition = message["player"]["Position"]
+    if (message["event"] === "new_player") {
+        if (message["player"]["username"] === username) {
+            playerPosition = message["player"]["Position"]
+            console.log("Self player position is", playerPosition)
+        }
+        if (!(message["player"]["Position"] === playerPosition) ){
+            addPlayer(message["player"])
+        }
     }
 
-    if (message["event"] === "new_player" && !(message["player"]["Position"] === playerPosition) ){
-        addPlayer(message["player"])
-        console.log("HERE")
+    if (message["event"] === "preflop") {
+        changeCard("table1", message["cards"][0])
+        changeCard("table2", message["cards"][1])
+        changeCard("table3", message["cards"][2])
     }
+
+    if (message["event"] === "distribution") {
+        changeCard("player_card1", message["cards"][0])
+        changeCard("player_card2", message["cards"][1])
+    }
+
 });
 
 // обработчик события закрытия соединения
@@ -57,12 +70,17 @@ socket.addEventListener('error', (event) => {
     console.log('WebSocket connection error');
 });
 
+function changeCard(cardID, card) {
+    document.getElementById(cardID).textContent=(card["Value"] + "\n" + card["Suit"]);
+}
+
 function addPlayer(player) {
     const parentElement = document.getElementById('table');
 
     // Создаем новый элемент div
     const newDiv = document.createElement("div");
-    const pos = ( 4 + player["Position"] - playerPosition) % 7
+    const pos = ( 4 + player["Position"] - playerPosition) % 7;
+    console.log("New player position is", pos)
     newDiv.id = `player${pos}`;
     if (pos <= 3 && pos !== 0) {
         newDiv.innerHTML = `

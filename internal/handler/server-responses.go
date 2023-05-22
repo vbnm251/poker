@@ -2,26 +2,26 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"poker/internal/logic"
 )
 
 // SendToAllPlayers sends data to every player
 func (h *Handler) SendToAllPlayers(gameID string, data map[string]interface{}) {
 	for _, player := range h.Games[gameID].Players {
 		if player != nil {
-			_ = player.Conn.WriteJSON(data)
+			_ = player.SendMessage(data)
 		}
 	}
 }
 
-func StatusResponse(status string, conn *websocket.Conn) {
+func StatusResponse(status string, player *logic.Player) {
 	log.Println("websocket status:", status)
 	data := map[string]interface{}{
 		"status": status,
 	}
-	err := conn.WriteJSON(data)
+	err := player.SendMessage(data)
 	if err != nil {
 		return
 	}

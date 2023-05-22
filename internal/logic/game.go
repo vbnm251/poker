@@ -95,6 +95,7 @@ func (g *Game) QuitGame(pos int) {
 	g.Players[pos] = nil
 }
 
+// todo
 func (g *Game) RotateRoles() {
 	if g.GetRealLength() != 1 {
 		for i := g.SmallBlindID + 1; i < g.SmallBlindID+MaxPlayers; i++ {
@@ -118,7 +119,7 @@ func (g *Game) RotateRoles() {
 				g.Players[i].Role = Regular
 			}
 		}
-		for i := MaxPlayers - 1; i > bbID; i++ {
+		for i := MaxPlayers - 1; i > bbID; i-- {
 			if g.Players[i] != nil && g.Players[i].Role == Regular {
 				g.Players[i].Role = Dealer
 				break
@@ -279,7 +280,7 @@ func (g *Game) StartGame() {
 				"role":  player.Role,
 				"cards": player.Cards,
 			}
-			_ = player.Conn.WriteJSON(data)
+			_ = player.SendMessage(data)
 		}
 	}
 }
