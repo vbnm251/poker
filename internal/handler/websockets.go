@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"poker/internal/logic"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -79,15 +80,22 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 			// This actions must be done only once
 			// So it happens only in small blind player
 			if player.Role == logic.SmallBlind {
-				//h.Games[gameID].RotateRoles()
+				time.Sleep(2 * time.Second)
 				log.Printf("Game %s has been started\n", gameID)
+				//h.Games[gameID].RotateRoles()
 				h.Games[gameID].ShuffleDeck()
 				h.Games[gameID].Distribution()
 				h.Games[gameID].TableCards()
 				h.Games[gameID].StartGame()
 
-				//PREFLOP
 				data := map[string]interface{}{
+					"event":   "gamePlayers",
+					"players": h.Games[gameID].Players,
+				}
+				h.SendToAllPlayers(gameID, data)
+
+				//PREFLOP
+				data = map[string]interface{}{
 					"event": "preflop",
 					"cards": [3]logic.Card{
 						h.Games[gameID].Table[0],
@@ -100,10 +108,16 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 			}
 			//todo add queue
 			var action logic.Action
+			for {
+				if h.Games[gameID].CurrentStep == pos {
+					break
+				}
+			}
 			if err := conn.ReadJSON(&action); err != nil {
 				log.Println(err)
 				return
 			}
+
 			if action.Action == logic.Fold {
 				player.InGame = false
 			} else if action.Action == logic.Raise {
@@ -113,12 +127,32 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 				player.CurrentBet = action.Sum
 			}
 
+			action.Next = h.Games[gameID].CalculateNextStep()
+			h.SendToAllPlayers(gameID, action)
+
 			// check if at least one player
-			//if f, pl := h.Games[gameID].CheckPlayers(); !f && player.Role == logic.SmallBlind {
-			//	_ = pl.Conn.WriteJSON(map[string]interface{}{
-			//		"status": "WINNER",
-			//	})
-			//}
+			if player.Role == logic.SmallBlind {
+				for {
+					if h.Games[gameID].CurrentStep == -1 {
+						data := map[string]interface{}{
+							"status": "YOU SURVIVED PREFLOP",
+						}
+						h.SendToAllPlayers(gameID, data)
+						h.Games[gameID].CurrentStep = h.Games[gameID].SmallBlindID
+						if f, pl := h.Games[gameID].CheckPlayers(); !f {
+							_ = pl.SendMessage(map[string]interface{}{
+								"status": "WINNER",
+							})
+						}
+						break
+					}
+				}
+
+			}
+
+			for {
+
+			}
 
 		}
 	}

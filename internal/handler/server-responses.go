@@ -8,10 +8,10 @@ import (
 )
 
 // SendToAllPlayers sends data to every player
-func (h *Handler) SendToAllPlayers(gameID string, data map[string]interface{}) {
+func (h *Handler) SendToAllPlayers(gameID string, v interface{}) {
 	for _, player := range h.Games[gameID].Players {
 		if player != nil {
-			_ = player.SendMessage(data)
+			_ = player.SendMessage(v)
 		}
 	}
 }

@@ -1,77 +1,57 @@
-const urlParams = new URLSearchParams(window.location.search);
-const host = window.location.host
-const gameID = urlParams.get('id');
-const username = sessionStorage.getItem('username')
 console.log("Username is", username)
 
-const socket = new WebSocket(`ws://${host}/api/ws?id=${gameID}`);
 let playerPosition = -1;
+let bankSum = 0
 
-// обработчик события открытия соединения
-socket.addEventListener('open', (event) => {
-    console.log('WebSocket connection established');
-    socket.send(`{
-            "username" : "${username}"
-        }`
-    )
-    fetch(`http://${host}/api/gameInfo?id=${gameID}`, {
-        headers: {
-            'Content-Type': 'application/json'
-        },
-    }).then(response => response.json())
-        .then(data => {
-            for (const player of data["players"]) {
-                if (player && !(player["username"] === username)) {
-                    addPlayer(player)
-                }
-
-            }
-        })
-        .catch(error => {
-            console.error(error);
-        });
-});
-
-// обработчик события получения сообщения от сервера
-socket.addEventListener('message', (event) => {
-    const message = JSON.parse(event.data);
-    console.log(`Message is ${event.data}`)
-
-    if (message["event"] === "new_player") {
-        if (message["player"]["username"] === username) {
-            playerPosition = message["player"]["Position"]
-            console.log("Self player position is", playerPosition)
-        }
-        if (!(message["player"]["Position"] === playerPosition) ){
-            addPlayer(message["player"])
-        }
-    }
-
-    if (message["event"] === "preflop") {
-        changeCard("table1", message["cards"][0])
-        changeCard("table2", message["cards"][1])
-        changeCard("table3", message["cards"][2])
-    }
-
-    if (message["event"] === "distribution") {
-        changeCard("player_card1", message["cards"][0])
-        changeCard("player_card2", message["cards"][1])
-    }
-
-});
-
-// обработчик события закрытия соединения
-socket.addEventListener('close', (event) => {
-    console.log('WebSocket connection closed');
-});
-
-// обработчик события ошибки соединения
-socket.addEventListener('error', (event) => {
-    console.log('WebSocket connection error');
-});
+const raiseButton = document.getElementById('button-raise');
+const callButton = document.getElementById('button-call');
+const foldButton = document.getElementById('button-fold');
 
 function changeCard(cardID, card) {
     document.getElementById(cardID).textContent=(card["Value"] + "\n" + card["Suit"]);
+}
+
+function changeElement(ID, text) {
+    document.getElementById(ID).textContent=text;
+}
+
+callButton.addEventListener('click', function () {
+    const data = `{
+        "position" : ${playerPosition},
+        "action" : "call",
+        "sum" : 200 
+    }`
+    SendMessage(data)
+})
+
+function addGameTurnIndicator(pos) {
+    let cont = `player${pos}inf`;
+    if (pos === 4) {
+        cont = `player4`;
+    }
+
+    const container = document.getElementById(cont);
+
+    // Создаем элемент красного кружка
+    const gameTurnIndicator = document.createElement("div");
+    gameTurnIndicator.classList.add("game-turn");
+
+    // Добавляем красный кружок к элементу с определенным ID
+    container.appendChild(gameTurnIndicator);
+}
+
+function removeGameTurnIndicator(pos) {
+    let cont = `player${pos}inf`;
+    if (pos === 4) {
+        cont = `player4`;
+    }
+    const container = document.getElementById(cont);
+
+    // Удаляем красный кружок из элемента с определенным ID
+    const gameTurnIndicator = container.querySelector(".game-turn");
+    if (gameTurnIndicator) {
+        container.removeChild(gameTurnIndicator);
+    }
 }
 
 function addPlayer(player) {
@@ -79,8 +59,7 @@ function addPlayer(player) {
 
     // Создаем новый элемент div
     const newDiv = document.createElement("div");
-    const pos = ( 4 + player["Position"] - playerPosition) % 7;
-    console.log("New player position is", pos)
+    const pos = getGamePosition(player["Position"]);
     newDiv.id = `player${pos}`;
     if (pos <= 3 && pos !== 0) {
         newDiv.innerHTML = `
@@ -94,7 +73,7 @@ function addPlayer(player) {
                 <span>$${player["CurrentBet"]}</span>
             </div>
         </div>
-        <div class="info-left">
+        <div id="player${pos}inf" class="info-left">
             <div class="username">${player["username"]}</div>
             <div class="total-money">$${player["Balance"]}</div>
         </div>
@@ -112,7 +91,7 @@ function addPlayer(player) {
             <div class="player-card-right card1 card"></div>
             <div class="player-card-right card2 card"></div>
         </div>
-        <div class="info-right">
+        <div id="player${pos}inf" class="info-right">
             <div class="username">${player["username"]}</div>
             <div class="total-money">$${player["Balance"]}</div>
         </div>
@@ -120,4 +99,8 @@ function addPlayer(player) {
     }
 
     parentElement.appendChild(newDiv);
+}
+
+function getGamePosition(pos)  {
+    return ( 4 + pos - playerPosition) % 7
 }

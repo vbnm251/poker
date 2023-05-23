@@ -37,6 +37,7 @@ type Game struct {
 	Live         bool      `json:"live"`
 	SmallBlindID int       `json:"-"`
 	Players      []*Player `json:"players"`
+	CurrentStep  int       `json:"currentStep"`
 	Deck         []Card    `json:"-"`
 	Table        [5]Card   `json:"table"`
 	CurrentBet   int       `json:"current_bet"`
@@ -95,33 +96,38 @@ func (g *Game) QuitGame(pos int) {
 	g.Players[pos] = nil
 }
 
-// todo
 func (g *Game) RotateRoles() {
 	if g.GetRealLength() != 1 {
-		for i := g.SmallBlindID + 1; i < g.SmallBlindID+MaxPlayers; i++ {
-			if g.Players[i%MaxPlayers] != nil {
-				g.SmallBlindID = i % MaxPlayers
+		bbID, sbID := 0, 0
+		upBorder := g.SmallBlindID + MaxPlayers + 1
+
+		//looking for new small blind
+		for i := g.SmallBlindID + 1; i < upBorder; i++ {
+			if g.Players[i%7] != nil {
+				g.SmallBlindID = i % 7
+				sbID = i
+				g.Players[i%7].Role = "small_blind"
 				break
 			}
 		}
-		g.Players = append(g.Players[g.SmallBlindID:], g.Players[:g.SmallBlindID]...)
-		g.Players[0].Role = SmallBlind
-		bbID := 0
-		for i := 1; i < MaxPlayers; i++ {
-			if g.Players[i] != nil {
-				g.Players[i].Role = BigBlind
+		// looking for new big blind
+		for i := sbID + 1; i < upBorder; i++ {
+			if g.Players[i%7] != nil {
+				g.Players[i%7].Role = "big_blind"
 				bbID = i
 				break
 			}
 		}
-		for i := bbID + 1; i < MaxPlayers; i++ {
-			if g.Players[i] != nil {
-				g.Players[i].Role = Regular
+		//regular players
+		for i := bbID + 1; i < upBorder; i++ {
+			if g.Players[i%7] != nil {
+				g.Players[i%7].Role = "regular"
 			}
 		}
-		for i := MaxPlayers - 1; i > bbID; i-- {
-			if g.Players[i] != nil && g.Players[i].Role == Regular {
-				g.Players[i].Role = Dealer
+		//dealer
+		for i := upBorder - 1; i > bbID; i-- {
+			if g.Players[i%7] != nil {
+				g.Players[i%7].Role = "dealer"
 				break
 			}
 		}
@@ -230,8 +236,8 @@ func (g *Game) DefineWinners() []*Player {
 	return winners
 }
 
-// CheckPlayers returns true and a winner in case game contains at least 2 players
-// In other way it returns false
+// CheckPlayers returns true in case game contains at least 2 players
+// In other way it returns false and winner
 func (g *Game) CheckPlayers() (bool, *Player) {
 	inGamePlayers := 0
 	var pl *Player
@@ -273,6 +279,7 @@ func (g *Game) TableCards() {
 
 // StartGame sends role and hand to every player
 func (g *Game) StartGame() {
+	g.CurrentStep = g.SmallBlindID
 	for _, player := range g.Players {
 		if player != nil {
 			data := map[string]interface{}{
@@ -283,6 +290,23 @@ func (g *Game) StartGame() {
 			_ = player.SendMessage(data)
 		}
 	}
+}
+
+func (g *Game) CalculateNextStep() int {
+	if g.Players[g.CurrentStep].Role == Dealer {
+		return -1
+	}
+	for i := g.CurrentStep + 1; i < g.CurrentStep+MaxPlayers; i++ {
+		if i%7 == g.SmallBlindID {
+			break
+		}
+		if g.Players[i%MaxPlayers] != nil {
+			g.CurrentStep = i % MaxPlayers
+			return i % MaxPlayers
+		}
+	}
+	g.CurrentStep = -1
+	return -1
 }
 
 func (g *Game) GetRealLength() int {

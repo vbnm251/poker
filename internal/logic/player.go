@@ -6,8 +6,10 @@ import (
 )
 
 type Action struct {
-	Action string `json:"action"`
-	Sum    int    `json:"sum"`
+	Position int    `json:"position"`
+	Action   string `json:"action"`
+	Sum      int    `json:"sum"`
+	Next     int    `json:"next"`
 }
 
 const (

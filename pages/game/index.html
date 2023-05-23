@@ -3,13 +3,20 @@
     <head>
         <title>Poker</title>
         <link rel="stylesheet" href="/pages/game/style.css">
+        <script>
+            const host = window.location.host
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameID = urlParams.get('id');
+            const username = sessionStorage.getItem('username')
+        </script>
+        <script src="/pages/game/websockets.js" ></script>
     </head>
     <body>
         <div id="table">
             <div id="dealer-theme1"></div>
             <div id="dealer-theme2"></div>
             <div id="dealer">D</div>
-            <div id="bank">Total sum: 2000$</div>
+            <div id="bank">0$</div>
 
             <div id="table-cards">
                 <div id="table1" class="card table-card"></div>
@@ -19,20 +26,20 @@
                 <div id="table5" class="card table-card"></div>
             </div>
 
-            <div id="self-player" >
+            <div id="player4" >
                 <div class="player-cards">
                     <div id="player_card1" class="card table-card"></div>
                     <div id="player_card2" class="card table-card"></div>
                 </div>
                 <div class="buttons" >
-                    <button class="button-call">Call 50$</button>
-                    <button class="button-raise">Raise</button>
-                    <button class="button-fold">Fold</button>
+                    <button id="button-call">Call 50$</button>
+                    <button id="button-raise">Raise</button>
+                    <button id="button-fold">Fold</button>
                 </div>
             </div>
-            
 
         </div>
         <script src="/pages/game/script.js"></script>
+        <script src="/pages/game/players.js"></script>
     </body>
 </html>
