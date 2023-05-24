@@ -48,7 +48,7 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 	player = logic.NewPlayer(player.Username, 5000, conn)
 	pos, err := h.Games[gameID].JoinGame(&player)
 	if err != nil {
-		StatusResponse("Already max players", &player)
+		StatusResponse("Already max game", &player)
 		return
 	} else {
 		data := map[string]interface{}{
@@ -80,23 +80,31 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 			// This actions must be done only once
 			// So it happens only in small blind player
 			if player.Role == logic.SmallBlind {
-				time.Sleep(2 * time.Second)
+				time.Sleep(200 * time.Millisecond)
 				log.Printf("Game %s has been started\n", gameID)
 				//h.Games[gameID].RotateRoles()
+
+				// Preflop
 				h.Games[gameID].ShuffleDeck()
 				h.Games[gameID].Distribution()
-				h.Games[gameID].TableCards()
 				h.Games[gameID].StartGame()
-
 				data := map[string]interface{}{
-					"event":   "gamePlayers",
-					"players": h.Games[gameID].Players,
+					"event": "gamePlayers",
+					"game":  h.Games[gameID].Players,
 				}
 				h.SendToAllPlayers(gameID, data)
+			}
 
-				//PREFLOP
-				data = map[string]interface{}{
-					"event": "preflop",
+			//get users bets here
+			h.GetUserBest(gameID, pos, conn)
+
+			// the end of preflop
+			// flop starts
+			if player.Role == logic.SmallBlind {
+				h.PeriodEnd(gameID)
+				h.Games[gameID].FlopCards()
+				data := map[string]interface{}{
+					"event": "flop",
 					"cards": [3]logic.Card{
 						h.Games[gameID].Table[0],
 						h.Games[gameID].Table[1],
@@ -104,54 +112,46 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					},
 				}
 				h.SendToAllPlayers(gameID, data)
-
-			}
-			//todo add queue
-			var action logic.Action
-			for {
-				if h.Games[gameID].CurrentStep == pos {
-					break
-				}
-			}
-			if err := conn.ReadJSON(&action); err != nil {
-				log.Println(err)
-				return
 			}
 
-			if action.Action == logic.Fold {
-				player.InGame = false
-			} else if action.Action == logic.Raise {
-				player.CurrentBet = action.Sum
-				h.Games[gameID].CurrentBet = action.Sum
-			} else if action.Action == logic.Call {
-				player.CurrentBet = action.Sum
-			}
+			h.GetUserBest(gameID, pos, conn)
 
-			action.Next = h.Games[gameID].CalculateNextStep()
-			h.SendToAllPlayers(gameID, action)
-
-			// check if at least one player
+			//the end of flop -> turn starts
 			if player.Role == logic.SmallBlind {
-				for {
-					if h.Games[gameID].CurrentStep == -1 {
-						data := map[string]interface{}{
-							"status": "YOU SURVIVED PREFLOP",
-						}
-						h.SendToAllPlayers(gameID, data)
-						h.Games[gameID].CurrentStep = h.Games[gameID].SmallBlindID
-						if f, pl := h.Games[gameID].CheckPlayers(); !f {
-							_ = pl.SendMessage(map[string]interface{}{
-								"status": "WINNER",
-							})
-						}
-						break
-					}
+				h.PeriodEnd(gameID)
+				h.Games[gameID].TurnCard()
+				data := map[string]interface{}{
+					"event": "turn",
+					"card":  h.Games[gameID].Table[3],
 				}
-
+				h.SendToAllPlayers(gameID, data)
 			}
 
-			for {
+			h.GetUserBest(gameID, pos, conn)
 
+			// the end of turn -> river
+			if player.Role == logic.SmallBlind {
+				h.PeriodEnd(gameID)
+				h.Games[gameID].RiverCard()
+				data := map[string]interface{}{
+					"event": "river",
+					"card":  h.Games[gameID].Table[4],
+				}
+				h.SendToAllPlayers(gameID, data)
+			}
+
+			h.GetUserBest(gameID, pos, conn)
+
+			if player.Role == logic.SmallBlind {
+				h.PeriodEnd(gameID)
+				winners := h.Games[gameID].DefineWinners()
+				for _, player := range winners {
+					data := map[string]interface{}{
+						"event":  "status",
+						"status": "WINNER",
+					}
+					_ = player.SendMessage(data)
+				}
 			}
 
 		}

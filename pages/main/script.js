@@ -23,5 +23,5 @@ randomGameBtn.addEventListener('click', function() {
           console.error(error);
         });
   }
-
 });
+

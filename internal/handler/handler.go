@@ -59,9 +59,9 @@ func (h *Handler) InitEndpoints() *mux.Router {
 		w.Header().Set("Cache-Control", "no-cache")
 		http.ServeFile(w, r, "pages/game/websockets.js")
 	})
-	pages.HandleFunc("/game/players.js", func(w http.ResponseWriter, r *http.Request) {
+	pages.HandleFunc("/game/game.js", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")
-		http.ServeFile(w, r, "pages/game/players.js")
+		http.ServeFile(w, r, "pages/game/game.js")
 	})
 	pages.HandleFunc("/game/poker-chip.png", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")

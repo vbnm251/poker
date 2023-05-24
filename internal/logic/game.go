@@ -2,13 +2,13 @@
 This package contains all classic poker logic
 
 The game:
-	1. Rotate players
+	1. Rotate game
 	2. Shuffle deck
 	3. Distribution
-	4. PreFlop: waiting for players' bets
-	5. Flop: waiting for players' bets
-	6. Turn: waiting for players' bets
-	7. River: waiting for players' bets
+	4. PreFlop: waiting for game' bets
+	5. Flop: waiting for game' bets
+	6. Turn: waiting for game' bets
+	7. River: waiting for game' bets
 	8. Congratulations winner
 */
 
@@ -36,7 +36,7 @@ const Regular = "regular"
 type Game struct {
 	Live         bool      `json:"live"`
 	SmallBlindID int       `json:"-"`
-	Players      []*Player `json:"players"`
+	Players      []*Player `json:"game"`
 	CurrentStep  int       `json:"currentStep"`
 	Deck         []Card    `json:"-"`
 	Table        [5]Card   `json:"table"`
@@ -63,7 +63,7 @@ func NewGame() *Game {
 	return game
 }
 
-// JoinGame Return Free position and error in case there are max players in the game
+// JoinGame Return Free position and error in case there are max game in the game
 func (g *Game) JoinGame(player *Player) (int, error) {
 	switch g.GetRealLength() {
 	case 0:
@@ -118,7 +118,7 @@ func (g *Game) RotateRoles() {
 				break
 			}
 		}
-		//regular players
+		//regular game
 		for i := bbID + 1; i < upBorder; i++ {
 			if g.Players[i%7] != nil {
 				g.Players[i%7].Role = "regular"
@@ -142,91 +142,94 @@ func (g *Game) DefineWinners() []*Player {
 	var bestSecondValue int = 0
 
 	for _, player := range g.Players {
-		currentCode := 0
-		var firstValue int
-		var secondValue int
+		if player != nil {
 
-		player.GetCombination(g.Table)
+			currentCode := 0
+			var firstValue int
+			var secondValue int
 
-		switch player.Combination.(type) {
-		case FlushRoyal:
-			currentCode = 10
-			comb := player.Combination.(FlushRoyal)
-			firstValue = comb.HighCard.Value
-		case StraightFlush:
-			currentCode = 9
-			comb := player.Combination.(StraightFlush)
-			firstValue = comb.HighCard.Value
-		case FourOfAKind:
-			currentCode = 8
-			comb := player.Combination.(FourOfAKind)
-			firstValue = comb.HighCard.Value
-		case FullHouse:
-			currentCode = 7
-			comb := player.Combination.(FullHouse)
-			firstValue = comb.HighTriple.Value
-			secondValue = comb.HighPair.Value
-		case Flush:
-			currentCode = 6
-			comb := player.Combination.(Flush)
-			firstValue = comb.HighCard.Value
-		case Straight:
-			currentCode = 5
-			comb := player.Combination.(Straight)
-			firstValue = comb.HighCard.Value
-		case Set:
-			currentCode = 4
-			comb := player.Combination.(Set)
-			firstValue = comb.HighCard.Value
-		case TwoPair:
-			currentCode = 3
-			comb := player.Combination.(TwoPair)
-			firstValue = comb.FirsPair.Value
-			secondValue = comb.SecondPair.Value
-		case Pair:
-			currentCode = 2
-			comb := player.Combination.(Pair)
-			firstValue = comb.HighCard.Value
-		case HighCard:
-			currentCode = 1
-			comb := player.Combination.(HighCard)
-			firstValue = comb.HighCard.Value
-		}
+			player.GetCombination(g.Table)
 
-		if currentCode > maxCode {
-			maxCode = currentCode
-			winners = []*Player{player}
-			bestKickerValue = player.Kicker.Value
-			bestFirstValue = firstValue
-			bestSecondValue = secondValue
-		} else if currentCode == maxCode {
-			if currentCode == 3 || currentCode == 7 {
-				if (firstValue > bestFirstValue) || (firstValue == bestFirstValue && secondValue > bestSecondValue) {
-					//player has better combination
-					winners = []*Player{player}
-					bestFirstValue = firstValue
-					bestSecondValue = secondValue
-					bestKickerValue = player.Kicker.Value
-				} else if firstValue == bestFirstValue && secondValue == bestSecondValue {
-					//checking kicker
-					if player.Kicker.Value > bestKickerValue {
+			switch player.Combination.(type) {
+			case FlushRoyal:
+				currentCode = 10
+				comb := player.Combination.(FlushRoyal)
+				firstValue = comb.HighCard.Value
+			case StraightFlush:
+				currentCode = 9
+				comb := player.Combination.(StraightFlush)
+				firstValue = comb.HighCard.Value
+			case FourOfAKind:
+				currentCode = 8
+				comb := player.Combination.(FourOfAKind)
+				firstValue = comb.HighCard.Value
+			case FullHouse:
+				currentCode = 7
+				comb := player.Combination.(FullHouse)
+				firstValue = comb.HighTriple.Value
+				secondValue = comb.HighPair.Value
+			case Flush:
+				currentCode = 6
+				comb := player.Combination.(Flush)
+				firstValue = comb.HighCard.Value
+			case Straight:
+				currentCode = 5
+				comb := player.Combination.(Straight)
+				firstValue = comb.HighCard.Value
+			case Set:
+				currentCode = 4
+				comb := player.Combination.(Set)
+				firstValue = comb.HighCard.Value
+			case TwoPair:
+				currentCode = 3
+				comb := player.Combination.(TwoPair)
+				firstValue = comb.FirsPair.Value
+				secondValue = comb.SecondPair.Value
+			case Pair:
+				currentCode = 2
+				comb := player.Combination.(Pair)
+				firstValue = comb.HighCard.Value
+			case HighCard:
+				currentCode = 1
+				comb := player.Combination.(HighCard)
+				firstValue = comb.HighCard.Value
+			}
+
+			if currentCode > maxCode {
+				maxCode = currentCode
+				winners = []*Player{player}
+				bestKickerValue = player.Kicker.Value
+				bestFirstValue = firstValue
+				bestSecondValue = secondValue
+			} else if currentCode == maxCode {
+				if currentCode == 3 || currentCode == 7 {
+					if (firstValue > bestFirstValue) || (firstValue == bestFirstValue && secondValue > bestSecondValue) {
+						//player has better combination
+						winners = []*Player{player}
+						bestFirstValue = firstValue
+						bestSecondValue = secondValue
 						bestKickerValue = player.Kicker.Value
-					} else if player.Kicker.Value == bestKickerValue {
-						winners = append(winners, player)
+					} else if firstValue == bestFirstValue && secondValue == bestSecondValue {
+						//checking kicker
+						if player.Kicker.Value > bestKickerValue {
+							bestKickerValue = player.Kicker.Value
+						} else if player.Kicker.Value == bestKickerValue {
+							winners = append(winners, player)
+						}
 					}
-				}
-			} else {
-				if firstValue > bestFirstValue {
-					//player has better combination
-					winners = []*Player{player}
-					bestFirstValue = firstValue
-					bestKickerValue = player.Kicker.Value
-				} else if firstValue == bestFirstValue {
-					//checking kicker
-					if player.Kicker.Value > bestKickerValue {
+				} else {
+					if firstValue > bestFirstValue {
+						//player has better combination
+						winners = []*Player{player}
+						bestFirstValue = firstValue
 						bestKickerValue = player.Kicker.Value
-					} else if player.Kicker.Value == bestKickerValue {
-						winners = append(winners, player)
+					} else if firstValue == bestFirstValue {
+						//checking kicker
+						if player.Kicker.Value > bestKickerValue {
+							bestKickerValue = player.Kicker.Value
+						} else if player.Kicker.Value == bestKickerValue {
+							winners = append(winners, player)
+						}
 					}
 				}
 			}
@@ -236,7 +239,7 @@ func (g *Game) DefineWinners() []*Player {
 	return winners
 }
 
-// CheckPlayers returns true in case game contains at least 2 players
+// CheckPlayers returns true in case game contains at least 2 game
 // In other way it returns false and winner
 func (g *Game) CheckPlayers() (bool, *Player) {
 	inGamePlayers := 0
@@ -251,6 +254,17 @@ func (g *Game) CheckPlayers() (bool, *Player) {
 		return false, pl
 	}
 	return true, nil
+}
+
+func (g *Game) CalculateFirstStep() int {
+	for i := g.SmallBlindID; i < g.SmallBlindID+MaxPlayers; i++ {
+		j := i % 7
+		if g.Players[j] != nil && g.Players[j].InGame {
+			g.CurrentStep = j
+			return j
+		}
+	}
+	return -1
 }
 
 func (g *Game) Distribution() {
@@ -270,11 +284,21 @@ func (g *Game) ShuffleDeck() {
 	})
 }
 
-func (g *Game) TableCards() {
-	for i := 0; i < 5; i++ {
+func (g *Game) FlopCards() {
+	for i := 0; i < 3; i++ {
 		g.Table[i] = g.Deck[g.DeckInd]
 		g.DeckInd++
 	}
+}
+
+func (g *Game) TurnCard() {
+	g.Table[3] = g.Deck[g.DeckInd]
+	g.DeckInd++
+}
+
+func (g *Game) RiverCard() {
+	g.Table[4] = g.Deck[g.DeckInd]
+	g.DeckInd++
 }
 
 // StartGame sends role and hand to every player
@@ -282,6 +306,7 @@ func (g *Game) StartGame() {
 	g.CurrentStep = g.SmallBlindID
 	for _, player := range g.Players {
 		if player != nil {
+			player.InGame = true
 			data := map[string]interface{}{
 				"event": "distribution",
 				"role":  player.Role,
@@ -293,9 +318,6 @@ func (g *Game) StartGame() {
 }
 
 func (g *Game) CalculateNextStep() int {
-	if g.Players[g.CurrentStep].Role == Dealer {
-		return -1
-	}
 	for i := g.CurrentStep + 1; i < g.CurrentStep+MaxPlayers; i++ {
 		if i%7 == g.SmallBlindID {
 			break

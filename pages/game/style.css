@@ -145,6 +145,20 @@ body {
     margin-top: 4px;
 }
 
+.status {
+    font-size: 21px;
+    color: #FFD600;
+    margin-top: 6px;
+    font-weight: bolder;
+    left: 50%;
+    background-color: #025412ae;
+    border-radius: 20%;
+    padding: 2px 4px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
 .current-bet{
     background-color: #025412ae;
     border-radius: 20%;

@@ -1,6 +1,5 @@
 const socket = new WebSocket(`ws://${host}/api/ws?id=${gameID}`);
 
-// обработчик события открытия соединения
 socket.addEventListener('open', (event) => {
     console.log('WebSocket connection established');
     socket.send(`{
@@ -13,11 +12,11 @@ socket.addEventListener('open', (event) => {
         },
     }).then(response => response.json())
         .then(data => {
+            //todo: handle data
             for (const player of data["players"]) {
                 if (player && !(player["username"] === username)) {
                     addPlayer(player)
                 }
-
             }
         })
         .catch(error => {
@@ -25,10 +24,8 @@ socket.addEventListener('open', (event) => {
         });
 });
 
-// обработчик события получения сообщения от сервера
 socket.addEventListener('message', (event) => {
     const message = JSON.parse(event.data);
-    console.log(`Message is ${event.data}`);
 
     if (message["event"] === "new_player") {
         if (message["player"]["username"] === username) {
@@ -40,51 +37,80 @@ socket.addEventListener('message', (event) => {
         }
     }
 
-    else if (message["event"] === "preflop") {
+    else if (message["event"] === "flop") {
         changeCard("table1", message["cards"][0]);
         changeCard("table2", message["cards"][1]);
         changeCard("table3", message["cards"][2]);
     }
 
+    else if (message["event"] === "turn") {
+        changeCard("table4", message["card"]);
+    }
+
+    else if (message["event"] === "river") {
+        changeCard("table5", message["card"]);
+    }
+
     else if (message["event"] === "distribution") {
+        inGame = true
         changeCard("player_card1", message["cards"][0]);
         changeCard("player_card2", message["cards"][1]);
     }
 
     else if (message["event"] === "gamePlayers") {
         for (const player of message["players"]) {
+            //todo : handle game info
             if (player) {
-                players.push(player)
                 if (player["Role"] === "small_blind") {
-                    const pos = getGamePosition(player["Position"])
-                    addGameTurnIndicator(pos)
+                    if (player["username"] === username) {
+                        curStep = true
+                    }
+                    changeElement(`player_${getGamePosition(player["Position"])}_status`, "Current")
                 }
             }
         }
     }
 
-    else if (message["action"] === "call") {
-        removeGameTurnIndicator(getGamePosition(message["position"]))
-        bankSum+=message["sum"]
-        changeElement("bank", bankSum + "$")
-        if (message["next"] !== -1) {
-            addGameTurnIndicator(getGamePosition(message["next"]))
+    else if (message["event"] === "status") {
+        if (message["status"] === "WINNER") {
+            alert("Congratulations")
         }
+        //todo : add bank
+    }
+
+    else if (message["event"] === "step") {
+        changeElement(`player_${getGamePosition(message["pos"])}_status`, "Current")
+        if (message["pos"] === playerPosition) {
+            curStep = true
+        }
+    }
+
+    //game events: fold, call, raise
+    else  {
+        if (message["next"] !== -1) {
+            if (message["next"] === playerPosition) {
+                curStep = true
+            }
+            changeElement(`player_${getGamePosition(message["next"])}_status`, "Current")
+        }
+        if (message["action"] === "fold") {
+            changeElement(`player_${getGamePosition(message["position"])}_status`, "Out of game")
+            return
+        }
+        changeElement(`player_${getGamePosition(message["position"])}_status`, "In Game")
+        changeBank(message["sum"])
     }
 
 });
 
-// обработчик события закрытия соединения
 socket.addEventListener('close', (event) => {
     console.log('WebSocket connection closed');
 });
 
-// обработчик события ошибки соединения
 socket.addEventListener('error', (event) => {
     console.log('WebSocket connection error');
 });
 
 function SendMessage(data) {
     socket.send(data)
-    console.log("data has been sent")
 }
