@@ -66,15 +66,14 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	for {
-		if h.Games[gameID].GetRealLength() >= 2 {
-			h.Games[gameID].Live = true
-		} else {
-			h.Games[gameID].Live = false
-		}
 
+	GameLoop:
 		for {
-			if !h.Games[gameID].Live || h.Games[gameID].GetRealLength() < 2 {
-				break
+			if h.Games[gameID].GetRealLength() >= 2 {
+				h.Games[gameID].Live = true
+			} else {
+				h.Games[gameID].Live = false
+				break GameLoop
 			}
 
 			// This actions must be done only once
@@ -82,21 +81,23 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 			if player.Role == logic.SmallBlind {
 				time.Sleep(200 * time.Millisecond)
 				log.Printf("Game %s has been started\n", gameID)
-				//h.Games[gameID].RotateRoles()
 
 				// Preflop
 				h.Games[gameID].ShuffleDeck()
 				h.Games[gameID].Distribution()
 				h.Games[gameID].StartGame()
 				data := map[string]interface{}{
-					"event": "gamePlayers",
-					"game":  h.Games[gameID].Players,
+					"event":   "gamePlayers",
+					"players": h.Games[gameID].Players,
 				}
 				h.SendToAllPlayers(gameID, data)
 			}
 
 			//get users bets here
 			h.GetUserBest(gameID, pos, conn)
+			if !h.Games[gameID].Live {
+				break GameLoop
+			}
 
 			// the end of preflop
 			// flop starts
@@ -115,6 +116,9 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 			}
 
 			h.GetUserBest(gameID, pos, conn)
+			if !h.Games[gameID].Live {
+				break GameLoop
+			}
 
 			//the end of flop -> turn starts
 			if player.Role == logic.SmallBlind {
@@ -128,6 +132,9 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 			}
 
 			h.GetUserBest(gameID, pos, conn)
+			if !h.Games[gameID].Live {
+				break GameLoop
+			}
 
 			// the end of turn -> river
 			if player.Role == logic.SmallBlind {
@@ -141,9 +148,25 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 			}
 
 			h.GetUserBest(gameID, pos, conn)
+			if !h.Games[gameID].Live {
+				break GameLoop
+			}
 
 			if player.Role == logic.SmallBlind {
-				h.PeriodEnd(gameID)
+				for {
+					if h.Games[gameID].CurrentStep == -1 {
+						h.Games[gameID].CurrentStep = h.Games[gameID].SmallBlindID
+						if f, pl := h.Games[gameID].CheckPlayers(); !f {
+							_ = pl.SendMessage(map[string]interface{}{
+								"event":  "status",
+								"status": "WINNER",
+							})
+							h.Games[gameID].Live = false
+							break GameLoop
+						}
+						break
+					}
+				}
 				winners := h.Games[gameID].DefineWinners()
 				for _, player := range winners {
 					data := map[string]interface{}{
@@ -152,8 +175,13 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					}
 					_ = player.SendMessage(data)
 				}
+				h.Games[gameID].ClearGame()
+				h.Games[gameID].RotateRoles()
+
+				log.Printf("Game %s has been finished\n", gameID)
 			}
 
+			time.Sleep(3 * time.Second)
 		}
 	}
 }

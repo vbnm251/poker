@@ -13,7 +13,7 @@ socket.addEventListener('open', (event) => {
     }).then(response => response.json())
         .then(data => {
             //todo: handle data
-            for (const player of data["players"]) {
+            for (const player of data["game"]) {
                 if (player && !(player["username"] === username)) {
                     addPlayer(player)
                 }
@@ -26,6 +26,7 @@ socket.addEventListener('open', (event) => {
 
 socket.addEventListener('message', (event) => {
     const message = JSON.parse(event.data);
+    console.log(message)
 
     if (message["event"] === "new_player") {
         if (message["player"]["username"] === username) {
@@ -52,6 +53,7 @@ socket.addEventListener('message', (event) => {
     }
 
     else if (message["event"] === "distribution") {
+        clearAll()
         inGame = true
         changeCard("player_card1", message["cards"][0]);
         changeCard("player_card2", message["cards"][1]);
@@ -62,10 +64,12 @@ socket.addEventListener('message', (event) => {
             //todo : handle game info
             if (player) {
                 if (player["Role"] === "small_blind") {
-                    if (player["username"] === username) {
+                    if (player["Position"] === playerPosition) {
                         curStep = true
                     }
                     changeElement(`player_${getGamePosition(player["Position"])}_status`, "Current")
+                } else {
+                    changeElement(`player_${getGamePosition(player["Position"])}_status`, "In Game")
                 }
             }
         }

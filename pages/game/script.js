@@ -4,8 +4,6 @@ const raiseButton = document.getElementById('button-raise');
 const callButton = document.getElementById('button-call');
 const foldButton = document.getElementById('button-fold');
 
-//TODO : clear the game field with game event
-
 callButton.addEventListener('click', function () {
     if (curStep) {
         const data = `{
@@ -44,5 +42,6 @@ raiseButton.addEventListener('click', function () {
         }`;
         SendMessage(data)
     }
-
 })
+
+

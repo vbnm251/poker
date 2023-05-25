@@ -23,8 +23,10 @@ func (h *Handler) GetUserBest(gameID string, pos int, conn *websocket.Conn) {
 	} else if action.Action == logic.Raise {
 		h.Games[gameID].Players[pos].CurrentBet = action.Sum
 		h.Games[gameID].CurrentBet = action.Sum
+		h.Games[gameID].Bank += action.Sum
 	} else if action.Action == logic.Call {
 		h.Games[gameID].Players[pos].CurrentBet = action.Sum
+		h.Games[gameID].Bank += action.Sum
 	}
 
 	action.Next = h.Games[gameID].CalculateNextStep()
@@ -40,6 +42,7 @@ func (h *Handler) PeriodEnd(gameID string) {
 					"event":  "status",
 					"status": "WINNER",
 				})
+				h.Games[gameID].Live = false
 			}
 			break
 		}

@@ -22,6 +22,10 @@ function updateCallSum(sum) {
 
 function addPlayer(player) {
     const parentElement = document.getElementById('table');
+    let gameStatus = 'Out of game'
+    if (player["InGame"]){
+        gameStatus = 'In game'
+    }
 
     // Создаем новый элемент div
     const newDiv = document.createElement("div");
@@ -36,13 +40,13 @@ function addPlayer(player) {
             <div class="current-bet">
                 <img src="/pages/game/poker-chip.png" alt="Image" height=30px width=30px>
                 <div class="spacer-vertical"></div>
-                <span>$${player["CurrentBet"]}</span>
+                <span id="player_${pos}_cur_bet">$${player["CurrentBet"]}</span>
             </div>
         </div>
         <div id="player${pos}inf" class="info-left">
             <div class="username">${player["username"]}</div>
-            <div class="total-money">$${player["Balance"]}</div>
-            <div id="player_${pos}_status" class="status">In Game</div>
+            <div id="player_${pos}_sum" class="total-money">$${player["Balance"]}</div>
+            <div id="player_${pos}_status" class="status">${gameStatus}</div>
         </div>
         
     `;
@@ -52,7 +56,7 @@ function addPlayer(player) {
             <div class="current-bet">
                 <img src="/pages/game/poker-chip.png" alt="Image" height="30px" width="30px">
                 <div class="spacer-vertical"></div>
-                <span>$${player["CurrentBet"]}</span>
+                <span id="player_${pos}_cur_bet">$${player["CurrentBet"]}</span>
             </div>
             <div class="spacer-vertical"></div>  
             <div class="player-card-right card1 card"></div>
@@ -60,13 +64,23 @@ function addPlayer(player) {
         </div>
         <div id="player${pos}inf" class="info-right">
             <div class="username">${player["username"]}</div>
-            <div class="total-money">$${player["Balance"]}</div>
-            <div id="player_${pos}_status" class="status">In Game</div>
+            <div id="player_${pos}_sum" class="total-money">$${player["Balance"]}</div>
+            <div id="player_${pos}_status" class="status">${gameStatus}</div>
         </div>
     `;
     }
 
     parentElement.appendChild(newDiv);
+}
+
+function clearAll() {
+    const card = {Value : "", Suit : ""}
+    for (let i = 0; i < 5; i++) {
+        changeCard(`table${i + 1}`, card)
+    }
+    changeCard("player_card1",card);
+    changeCard("player_card2",card);
+    changeBank(-bankSum);
 }
 
 function getGamePosition(pos)  {

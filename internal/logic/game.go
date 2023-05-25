@@ -63,6 +63,14 @@ func NewGame() *Game {
 	return game
 }
 
+func (g *Game) ClearGame() {
+	g.Table = [5]Card{}
+	g.Bank = 0
+	g.DeckInd = 0
+	g.CurrentBet = 0
+	g.Live = false
+}
+
 // JoinGame Return Free position and error in case there are max game in the game
 func (g *Game) JoinGame(player *Player) (int, error) {
 	switch g.GetRealLength() {
@@ -322,7 +330,7 @@ func (g *Game) CalculateNextStep() int {
 		if i%7 == g.SmallBlindID {
 			break
 		}
-		if g.Players[i%MaxPlayers] != nil {
+		if g.Players[i%MaxPlayers] != nil && g.Players[i%MaxPlayers].InGame {
 			g.CurrentStep = i % MaxPlayers
 			return i % MaxPlayers
 		}
