@@ -145,18 +145,20 @@ body {
     margin-top: 4px;
 }
 
-.status {
-    font-size: 21px;
-    color: #FFD600;
-    margin-top: 6px;
-    font-weight: bolder;
-    left: 50%;
-    background-color: #025412ae;
-    border-radius: 20%;
-    padding: 2px 4px;
+.player4-info {
+    margin: 6px 80px;
     align-items: center;
     justify-content: center;
     text-align: center;
+}
+
+.status {
+    font-size: 21px;
+    color: #FFD600;
+    font-weight: bolder;
+    background-color: #025412ae;
+    border-radius: 10%;
+    padding: 2px 4px;
 }
 
 .current-bet{
@@ -207,8 +209,9 @@ body {
 #player4{
     position: absolute;
     left: 50%;
-    top: 70%;
+    top: 65%;
     transform: translateX(-50%);
+    display: block;
 }
 
 .buttons{
@@ -242,10 +245,4 @@ button {
     color: white;
 }
 
-.game-turn {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: red;
-}
 

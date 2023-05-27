@@ -94,10 +94,10 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 			}
 
 			//get users bets here
-			h.GetUserBest(gameID, pos, conn)
 			if !h.Games[gameID].Live {
 				break GameLoop
 			}
+			h.GetUserBest(gameID, pos, conn)
 
 			// the end of preflop
 			// flop starts
@@ -115,10 +115,10 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 				h.SendToAllPlayers(gameID, data)
 			}
 
-			h.GetUserBest(gameID, pos, conn)
 			if !h.Games[gameID].Live {
 				break GameLoop
 			}
+			h.GetUserBest(gameID, pos, conn)
 
 			//the end of flop -> turn starts
 			if player.Role == logic.SmallBlind {
@@ -131,10 +131,10 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 				h.SendToAllPlayers(gameID, data)
 			}
 
-			h.GetUserBest(gameID, pos, conn)
 			if !h.Games[gameID].Live {
 				break GameLoop
 			}
+			h.GetUserBest(gameID, pos, conn)
 
 			// the end of turn -> river
 			if player.Role == logic.SmallBlind {
@@ -147,19 +147,19 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 				h.SendToAllPlayers(gameID, data)
 			}
 
-			h.GetUserBest(gameID, pos, conn)
 			if !h.Games[gameID].Live {
 				break GameLoop
 			}
+			h.GetUserBest(gameID, pos, conn)
 
 			if player.Role == logic.SmallBlind {
+				h.Games[gameID].Add()
 				for {
 					if h.Games[gameID].CurrentStep == -1 {
 						h.Games[gameID].CurrentStep = h.Games[gameID].SmallBlindID
 						if f, pl := h.Games[gameID].CheckPlayers(); !f {
 							_ = pl.SendMessage(map[string]interface{}{
-								"event":  "status",
-								"status": "WINNER",
+								"event": "winner",
 							})
 							h.Games[gameID].Live = false
 							break GameLoop
@@ -168,20 +168,26 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 				winners := h.Games[gameID].DefineWinners()
+				sum := h.Games[gameID].Bank / len(winners)
+				fmt.Printf("Winners of %s are: ", gameID)
 				for _, player := range winners {
 					data := map[string]interface{}{
-						"event":  "status",
-						"status": "WINNER",
+						"event": "winner",
+						"sum":   sum,
 					}
+					fmt.Print(player.Username + ", ")
 					_ = player.SendMessage(data)
+					h.Games[gameID].Players[player.Position].Balance += sum
 				}
+				fmt.Print("\n")
 				h.Games[gameID].ClearGame()
 				h.Games[gameID].RotateRoles()
 
 				log.Printf("Game %s has been finished\n", gameID)
+				h.Games[gameID].Disable()
 			}
 
-			time.Sleep(3 * time.Second)
+			h.Games[gameID].Wait()
 		}
 	}
 }

@@ -7,14 +7,12 @@ import (
 )
 
 type Handler struct {
-	Addr  string
 	Games map[string]*logic.Game
 }
 
-func NewHandler(addr string) *Handler {
+func NewHandler() *Handler {
 	return &Handler{
 		Games: make(map[string]*logic.Game),
-		Addr:  addr,
 	}
 }
 

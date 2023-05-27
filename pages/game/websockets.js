@@ -14,8 +14,12 @@ socket.addEventListener('open', (event) => {
         .then(data => {
             //todo: handle data
             for (const player of data["game"]) {
-                if (player && !(player["username"] === username)) {
-                    addPlayer(player)
+
+                if (player){
+                    if (!(player["username"] === username)) {
+                        addPlayer(player)
+                    }
+                    //players.set(getGamePosition(player["Position"]), player)
                 }
             }
         })
@@ -63,13 +67,17 @@ socket.addEventListener('message', (event) => {
         for (const player of message["players"]) {
             //todo : handle game info
             if (player) {
+                const pos = getGamePosition(player["Position"])
+                changeElement(`player_${pos}_sum`, player["Balance"])
+                changeElement(`player_${pos}_cur_bet`, player["CurrentBet"])
+                players.set(pos, player)
                 if (player["Role"] === "small_blind") {
                     if (player["Position"] === playerPosition) {
                         curStep = true
                     }
-                    changeElement(`player_${getGamePosition(player["Position"])}_status`, "Current")
+                    changeElement(`player_${pos}_status`, "Current")
                 } else {
-                    changeElement(`player_${getGamePosition(player["Position"])}_status`, "In Game")
+                    changeElement(`player_${pos}_status`, "In Game")
                 }
             }
         }
@@ -91,6 +99,7 @@ socket.addEventListener('message', (event) => {
 
     //game events: fold, call, raise
     else  {
+        bet(getGamePosition(message["position"])    , message["sum"])
         if (message["next"] !== -1) {
             if (message["next"] === playerPosition) {
                 curStep = true
