@@ -75,6 +75,8 @@ func (g *Game) RotateRoles() {
 				break
 			}
 		}
+
+		g.RaiseID = g.SmallBlindID
 	}
 }
 
