@@ -57,6 +57,8 @@ func (h *Handler) PeriodEnd(gameID string) {
 		}
 	}
 	game.ClearBets()
+	h.Games[gameID].RaiseID = h.Games[gameID].SmallBlindID
+	h.Games[gameID].CurrentBet = 0
 	pos := h.Games[gameID].CalculateFirstStep()
 	data := map[string]interface{}{
 		"event": "step",
