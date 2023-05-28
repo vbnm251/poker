@@ -43,7 +43,9 @@ type Game struct {
 	Bank         int       `json:"bank"`
 	DeckInd      int       `json:"-"`
 
-	_w bool `json:"-"`
+	RaiseID int `json:"raiseID"`
+
+	WaitSmallBlind bool `json:"-"`
 }
 
 func NewGame() *Game {
@@ -57,7 +59,7 @@ func NewGame() *Game {
 		Bank:         0,
 		CurrentBet:   0,
 
-		_w: true,
+		WaitSmallBlind: true,
 	}
 	for i := 0; i < MaxPlayers; i++ {
 		game.Players[i] = nil
@@ -72,6 +74,11 @@ func (g *Game) ClearGame() {
 	g.DeckInd = 0
 	g.CurrentBet = 0
 	g.Live = false
+	g.WaitSmallBlind = true
+	g.ClearBets()
+}
+
+func (g *Game) ClearBets() {
 	for _, player := range g.Players {
 		if player != nil {
 			player.CurrentBet = 0
@@ -156,9 +163,10 @@ func (g *Game) StartGame() {
 	}
 }
 
+// CalculateNextStep TODO
 func (g *Game) CalculateNextStep() int {
 	for i := g.CurrentStep + 1; i < g.CurrentStep+MaxPlayers; i++ {
-		if i%7 == g.SmallBlindID {
+		if i%7 == g.RaiseID { // replace smallblindid for raise id
 			break
 		}
 		if g.Players[i%MaxPlayers] != nil && g.Players[i%MaxPlayers].InGame {
@@ -168,6 +176,20 @@ func (g *Game) CalculateNextStep() int {
 	}
 	g.CurrentStep = -1
 	return -1
+}
+
+func (g *Game) CheckBets() bool {
+	if g.CurrentBet == 0 {
+		return false
+	}
+	for _, player := range g.Players {
+		if player != nil {
+			if player.CurrentBet < g.CurrentBet {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (g *Game) GetRealLength() int {
@@ -181,16 +203,16 @@ func (g *Game) GetRealLength() int {
 }
 
 func (g *Game) Add() {
-	g._w = false
+	g.WaitSmallBlind = false
 }
 
 func (g *Game) Disable() {
-	g._w = true
+	g.WaitSmallBlind = true
 }
 
 func (g *Game) Wait() {
 	for {
-		if g._w {
+		if g.WaitSmallBlind {
 			break
 		}
 	}
