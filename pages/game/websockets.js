@@ -68,8 +68,8 @@ socket.addEventListener('message', (event) => {
             //todo : handle game info
             if (player) {
                 const pos = getGamePosition(player["Position"])
-                changeElement(`player_${pos}_sum`, player["Balance"])
-                changeElement(`player_${pos}_cur_bet`, player["CurrentBet"])
+                changeElement(`player_${pos}_sum`, player.Balance)
+                changeElement(`player_${pos}_cur_bet`, player.CurrentBet)
                 players.set(pos, player)
                 if (player["Role"] === "small_blind") {
                     if (player["Position"] === playerPosition) {

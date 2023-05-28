@@ -45,7 +45,7 @@ type Game struct {
 
 	RaiseID int `json:"raiseID"`
 
-	WaitSmallBlind bool `json:"-"`
+	WaitSmallBlind bool `json:"w"`
 }
 
 func NewGame() *Game {
@@ -74,7 +74,6 @@ func (g *Game) ClearGame() {
 	g.DeckInd = 0
 	g.CurrentBet = 0
 	g.Live = false
-	g.WaitSmallBlind = true
 	g.ClearBets()
 }
 
@@ -166,7 +165,7 @@ func (g *Game) StartGame() {
 // CalculateNextStep TODO
 func (g *Game) CalculateNextStep() int {
 	for i := g.CurrentStep + 1; i < g.CurrentStep+MaxPlayers; i++ {
-		if i%7 == g.RaiseID { // replace smallblindid for raise id
+		if i%7 == g.RaiseID {
 			break
 		}
 		if g.Players[i%MaxPlayers] != nil && g.Players[i%MaxPlayers].InGame {

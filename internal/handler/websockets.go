@@ -76,11 +76,20 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 				break GameLoop
 			}
 
-			// This actions must be done only once
-			// So it happens only in small blind player
+			go func() {
+				for {
+					if !h.Games[gameID].Live {
+						return
+					}
+					h.GetUserBest(gameID, pos, conn)
+				}
+			}()
+
+			time.Sleep(200 * time.Millisecond)
+
 			if player.Role == logic.SmallBlind {
-				time.Sleep(200 * time.Millisecond)
 				log.Printf("Game %s has been started\n", gameID)
+				h.Games[gameID].Add()
 
 				// Preflop
 				h.Games[gameID].ShuffleDeck()
@@ -91,20 +100,11 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					"players": h.Games[gameID].Players,
 				}
 				h.SendToAllPlayers(gameID, data)
-			}
 
-			//get users bets here
-			if !h.Games[gameID].Live {
-				break GameLoop
-			}
-			h.GetUserBest(gameID, pos, conn)
-
-			// the end of preflop
-			// flop starts
-			if player.Role == logic.SmallBlind {
+				// Flop
 				h.PeriodEnd(gameID)
 				h.Games[gameID].FlopCards()
-				data := map[string]interface{}{
+				data = map[string]interface{}{
 					"event": "flop",
 					"cards": [3]logic.Card{
 						h.Games[gameID].Table[0],
@@ -113,47 +113,26 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					},
 				}
 				h.SendToAllPlayers(gameID, data)
-			}
 
-			if !h.Games[gameID].Live {
-				break GameLoop
-			}
-			h.GetUserBest(gameID, pos, conn)
-
-			//the end of flop -> turn starts
-			if player.Role == logic.SmallBlind {
+				// Turn
 				h.PeriodEnd(gameID)
 				h.Games[gameID].TurnCard()
-				data := map[string]interface{}{
+				data = map[string]interface{}{
 					"event": "turn",
 					"card":  h.Games[gameID].Table[3],
 				}
 				h.SendToAllPlayers(gameID, data)
-			}
 
-			if !h.Games[gameID].Live {
-				break GameLoop
-			}
-			h.GetUserBest(gameID, pos, conn)
-
-			// the end of turn -> river
-			if player.Role == logic.SmallBlind {
+				// River
 				h.PeriodEnd(gameID)
 				h.Games[gameID].RiverCard()
-				data := map[string]interface{}{
+				data = map[string]interface{}{
 					"event": "river",
 					"card":  h.Games[gameID].Table[4],
 				}
 				h.SendToAllPlayers(gameID, data)
-			}
 
-			if !h.Games[gameID].Live {
-				break GameLoop
-			}
-			h.GetUserBest(gameID, pos, conn)
-
-			if player.Role == logic.SmallBlind {
-				h.Games[gameID].Add()
+				// The final
 				for {
 					if h.Games[gameID].CurrentStep == -1 {
 						h.Games[gameID].CurrentStep = h.Games[gameID].SmallBlindID
@@ -190,4 +169,5 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 			h.Games[gameID].Wait()
 		}
 	}
+
 }

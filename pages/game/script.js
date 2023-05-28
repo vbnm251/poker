@@ -65,12 +65,9 @@ function addPlayer(player) {
         gameStatus = 'In game'
     }
 
-    console.log("POS IS ", player["Position"])
-
     // Создаем новый элемент div
     const newDiv = document.createElement("div");
     const pos = getGamePosition(player["Position"]);
-    console.log("NEw pos is", pos)
     newDiv.id = `player${pos}`;
     if (pos <= 3 && pos !== 0) {
         newDiv.innerHTML = `
