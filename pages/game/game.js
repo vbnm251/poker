@@ -2,11 +2,15 @@ let bankSum = 0
 let inGame = false
 let curStep = false
 
+let Bet = 0
+
 function bet(pos, sum) {
-    players.get(pos).CurrentBet=sum;
-    players.get(pos).Balance-=sum;
-    changeElement(`player_${pos}_sum`, players.get(pos)["Balance"])
-    changeElement(`player_${pos}_cur_bet`, players.get(pos)["CurrentBet"])
+    let player = players.get(pos);
+    player.CurrentBet += sum;
+    player.Balance-=sum;
+    players.set(pos, player)
+    changeElement(`player_${pos}_sum`, players.get(pos)["Balance"]);
+    changeElement(`player_${pos}_cur_bet`, players.get(pos)["CurrentBet"]);
 }
 
 function clearAll() {
@@ -17,6 +21,7 @@ function clearAll() {
     changeCard("player_card1",card);
     changeCard("player_card2",card);
     changeBank(-bankSum);
+    players.clear()
 }
 
 function getGamePosition(pos)  {
@@ -24,5 +29,19 @@ function getGamePosition(pos)  {
 }
 
 function updateCallSum(sum) {
-    changeElement('button-call', 'Call' + sum + '$')
+    let newTxt = 'Call ' + sum + '$'
+    if (sum === 0) {
+        newTxt = 'Check'
+    }
+    changeElement('button-call', newTxt)
+}
+
+function  clearBets() {
+    console.log("CLeaning started")
+    players.forEach(function (player, pos) {
+        player.CurrentBet = 0
+        changeElement(`player_${pos}_cur_bet`, 0);
+    })
+    updateCallSum(0)
+    Bet = 0
 }

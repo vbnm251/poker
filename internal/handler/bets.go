@@ -2,11 +2,10 @@ package handler
 
 import (
 	"github.com/gorilla/websocket"
-	"log"
 	"poker/internal/logic"
 )
 
-func (h *Handler) GetUserBest(gameID string, pos int, conn *websocket.Conn) {
+func (h *Handler) GetUserBest(gameID string, pos int, conn *websocket.Conn) error {
 	var action logic.Action
 
 	game := h.Games[gameID]
@@ -18,8 +17,7 @@ func (h *Handler) GetUserBest(gameID string, pos int, conn *websocket.Conn) {
 	}
 
 	if err := conn.ReadJSON(&action); err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 
 	if action.Action == logic.Fold {
@@ -37,6 +35,7 @@ func (h *Handler) GetUserBest(gameID string, pos int, conn *websocket.Conn) {
 	action.Next = game.CalculateNextStep()
 	h.SendToAllPlayers(gameID, action)
 
+	return nil
 }
 
 func (h *Handler) PeriodEnd(gameID string) {
@@ -45,7 +44,7 @@ func (h *Handler) PeriodEnd(gameID string) {
 	for {
 		if h.Games[gameID].CurrentStep == -1 && game.CheckBets() {
 			h.Games[gameID].CurrentStep = h.Games[gameID].SmallBlindID
-			if f, pl := h.Games[gameID].CheckPlayers(); !f {
+			if f, pl := h.Games[gameID].CheckPlayers(gameID); !f {
 				_ = pl.SendMessage(map[string]interface{}{
 					"event": "winner",
 				})

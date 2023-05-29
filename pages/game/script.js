@@ -9,7 +9,7 @@ callButton.addEventListener('click', function () {
         const data = `{
             "position" : ${playerPosition},
             "action" : "call",
-            "sum" : 200 
+            "sum" : ${Bet - players.get(4).CurrentBet}
         }`;
         SendMessage(data);
         curStep = false;
@@ -33,6 +33,7 @@ foldButton.addEventListener('click', function () {
 
 raiseButton.addEventListener('click', function () {
     let sum = prompt("Type your sum");
+    //todo : validate
     if (sum && curStep) {
         curStep = false
         const data = `{

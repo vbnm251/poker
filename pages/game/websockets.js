@@ -19,7 +19,6 @@ socket.addEventListener('open', (event) => {
                     if (!(player["username"] === username)) {
                         addPlayer(player)
                     }
-                    //players.set(getGamePosition(player["Position"]), player)
                 }
             }
         })
@@ -43,16 +42,20 @@ socket.addEventListener('message', (event) => {
     }
 
     else if (message["event"] === "flop") {
+        clearBets()
+        console.log(players)
         changeCard("table1", message["cards"][0]);
         changeCard("table2", message["cards"][1]);
         changeCard("table3", message["cards"][2]);
     }
 
     else if (message["event"] === "turn") {
+        clearBets()
         changeCard("table4", message["card"]);
     }
 
     else if (message["event"] === "river") {
+        clearBets()
         changeCard("table5", message["card"]);
     }
 
@@ -99,7 +102,7 @@ socket.addEventListener('message', (event) => {
 
     //game events: fold, call, raise
     else  {
-        bet(getGamePosition(message["position"])    , message["sum"])
+        bet(getGamePosition(message["position"]), message["sum"])
         if (message["next"] !== -1) {
             if (message["next"] === playerPosition) {
                 curStep = true
@@ -109,6 +112,9 @@ socket.addEventListener('message', (event) => {
         if (message["action"] === "fold") {
             changeElement(`player_${getGamePosition(message["position"])}_status`, "Out of game")
             return
+        } else if (message["action"] === "raise") {
+            Bet = message["sum"]
+            updateCallSum(Bet - players.get(4).CurrentBet)
         }
         changeElement(`player_${getGamePosition(message["position"])}_status`, "In Game")
         changeBank(message["sum"])

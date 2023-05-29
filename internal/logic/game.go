@@ -16,6 +16,7 @@ package logic
 
 import (
 	"errors"
+	"log"
 )
 
 const MaxPlayers = 7
@@ -120,7 +121,7 @@ func (g *Game) QuitGame(pos int) {
 
 // CheckPlayers returns true in case game contains at least 2 game
 // In other way it returns false and winner
-func (g *Game) CheckPlayers() (bool, *Player) {
+func (g *Game) CheckPlayers(gameID string) (bool, *Player) {
 	inGamePlayers := 0
 	var pl *Player
 	for _, player := range g.Players {
@@ -130,6 +131,8 @@ func (g *Game) CheckPlayers() (bool, *Player) {
 		}
 	}
 	if inGamePlayers == 1 {
+		pl.Balance += g.Bank
+		log.Printf("Winner of %s is %s", gameID, pl.Username)
 		return false, pl
 	}
 	return true, nil
@@ -162,7 +165,11 @@ func (g *Game) StartGame() {
 	}
 }
 
-// CalculateNextStep TODO
+func (g *Game) OnFinish() {
+	g.ClearGame()
+	g.RotateRoles()
+}
+
 func (g *Game) CalculateNextStep() int {
 	for i := g.CurrentStep + 1; i < g.CurrentStep+MaxPlayers; i++ {
 		if i%7 == g.RaiseID {
@@ -178,11 +185,8 @@ func (g *Game) CalculateNextStep() int {
 }
 
 func (g *Game) CheckBets() bool {
-	if g.CurrentBet == 0 {
-		return false
-	}
 	for _, player := range g.Players {
-		if player != nil {
+		if player != nil && player.InGame {
 			if player.CurrentBet < g.CurrentBet {
 				return false
 			}
