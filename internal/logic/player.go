@@ -33,6 +33,7 @@ type Player struct {
 	Cards       []Card          `json:"-"`
 	Combination interface{}     `json:"-"`
 	Kicker      Card            `json:"-"`
+	AllIn       bool            `json:"AllIn"`
 }
 
 func NewPlayer(username string, balance int, conn *websocket.Conn) Player {

@@ -10,12 +10,6 @@ func (h *Handler) GetUserBest(gameID string, pos int, conn *websocket.Conn) erro
 
 	game := h.Games[gameID]
 
-	for {
-		if game.CurrentStep == pos {
-			break
-		}
-	}
-
 	if err := conn.ReadJSON(&action); err != nil {
 		return err
 	}
@@ -32,6 +26,10 @@ func (h *Handler) GetUserBest(gameID string, pos int, conn *websocket.Conn) erro
 		}
 	}
 
+	if game.Players[pos].Balance == 0 {
+		game.Players[pos].AllIn = true
+	}
+
 	action.Next = game.CalculateNextStep()
 	h.SendToAllPlayers(gameID, action)
 
@@ -42,8 +40,7 @@ func (h *Handler) PeriodEnd(gameID string) {
 	game := h.Games[gameID]
 
 	for {
-		if h.Games[gameID].CurrentStep == -1 && game.CheckBets() {
-			h.Games[gameID].CurrentStep = h.Games[gameID].SmallBlindID
+		if h.Games[gameID].CurrentStep == -1 {
 			if f, pl := h.Games[gameID].CheckPlayers(gameID); !f {
 				_ = pl.SendMessage(map[string]interface{}{
 					"event": "winner",

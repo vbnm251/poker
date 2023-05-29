@@ -16,6 +16,7 @@ package logic
 
 import (
 	"errors"
+	"fmt"
 	"log"
 )
 
@@ -35,7 +36,7 @@ const Regular = "regular"
 // It provides all methods for running poker game
 type Game struct {
 	Live         bool      `json:"live"`
-	SmallBlindID int       `json:"-"`
+	SmallBlindID int       `json:"smallBlindID"`
 	Players      []*Player `json:"game"`
 	CurrentStep  int       `json:"currentStep"`
 	Deck         []Card    `json:"-"`
@@ -75,13 +76,23 @@ func (g *Game) ClearGame() {
 	g.DeckInd = 0
 	g.CurrentBet = 0
 	g.Live = false
+
 	g.ClearBets()
+	g.ClearAllIns()
 }
 
 func (g *Game) ClearBets() {
 	for _, player := range g.Players {
 		if player != nil {
 			player.CurrentBet = 0
+		}
+	}
+}
+
+func (g *Game) ClearAllIns() {
+	for _, player := range g.Players {
+		if player != nil {
+			player.AllIn = false
 		}
 	}
 }
@@ -138,14 +149,37 @@ func (g *Game) CheckPlayers(gameID string) (bool, *Player) {
 	return true, nil
 }
 
+// TODO: if bb, d, sb
+
 func (g *Game) CalculateFirstStep() int {
+	//checking for all-in players
+	for _, player := range g.Players {
+		if player != nil && player.AllIn {
+			return -1
+		}
+	}
+
 	for i := g.SmallBlindID; i < g.SmallBlindID+MaxPlayers; i++ {
-		j := i % 7
+		j := i % MaxPlayers
 		if g.Players[j] != nil && g.Players[j].InGame {
 			g.CurrentStep = j
 			return j
 		}
 	}
+	return -1
+}
+
+func (g *Game) CalculateNextStep() int {
+	for i := g.CurrentStep + 1; i < g.CurrentStep+MaxPlayers; i++ {
+		if i%7 == g.RaiseID {
+			break
+		}
+		if g.Players[i%MaxPlayers] != nil && g.Players[i%MaxPlayers].InGame && !g.Players[i%MaxPlayers].AllIn {
+			g.CurrentStep = i % MaxPlayers
+			return i % MaxPlayers
+		}
+	}
+	g.CurrentStep = -1
 	return -1
 }
 
@@ -165,33 +199,15 @@ func (g *Game) StartGame() {
 	}
 }
 
-func (g *Game) OnFinish() {
-	g.ClearGame()
-	g.RotateRoles()
-}
-
-func (g *Game) CalculateNextStep() int {
-	for i := g.CurrentStep + 1; i < g.CurrentStep+MaxPlayers; i++ {
-		if i%7 == g.RaiseID {
-			break
-		}
-		if g.Players[i%MaxPlayers] != nil && g.Players[i%MaxPlayers].InGame {
-			g.CurrentStep = i % MaxPlayers
-			return i % MaxPlayers
-		}
-	}
-	g.CurrentStep = -1
-	return -1
-}
-
 func (g *Game) CheckBets() bool {
 	for _, player := range g.Players {
-		if player != nil && player.InGame {
+		if player != nil && player.InGame && !player.AllIn {
 			if player.CurrentBet < g.CurrentBet {
 				return false
 			}
 		}
 	}
+	fmt.Println("Passed")
 	return true
 }
 

@@ -1,8 +1,12 @@
 let bankSum = 0
 let inGame = false
 let curStep = false
+let playerRole = ""
+
+let betCompleted = false
 
 let Bet = 0
+let gamePeriod = ""
 
 function bet(pos, sum) {
     let player = players.get(pos);
@@ -22,6 +26,8 @@ function clearAll() {
     changeCard("player_card2",card);
     changeBank(-bankSum);
     players.clear()
+
+    betCompleted = false
 }
 
 function getGamePosition(pos)  {

@@ -86,6 +86,7 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					h.Games[gameID].Add()
 
 					// Preflop
+					h.Games[gameID].CalculateFirstStep()
 					h.Games[gameID].ShuffleDeck()
 					h.Games[gameID].Distribution()
 					h.Games[gameID].StartGame()
@@ -96,7 +97,7 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					h.SendToAllPlayers(gameID, data)
 					h.PeriodEnd(gameID)
 					if !h.Games[gameID].Live {
-						h.Games[gameID].OnFinish()
+						h.Games[gameID].ClearGame()
 						h.Games[gameID].Disable()
 						break GameLoop
 					}
@@ -114,7 +115,7 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					h.SendToAllPlayers(gameID, data)
 					h.PeriodEnd(gameID)
 					if !h.Games[gameID].Live {
-						h.Games[gameID].OnFinish()
+						h.Games[gameID].ClearGame()
 						h.Games[gameID].Disable()
 						break GameLoop
 					}
@@ -128,7 +129,7 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					h.SendToAllPlayers(gameID, data)
 					h.PeriodEnd(gameID)
 					if !h.Games[gameID].Live {
-						h.Games[gameID].OnFinish()
+						h.Games[gameID].ClearGame()
 						h.Games[gameID].Disable()
 						break GameLoop
 					}
@@ -141,7 +142,7 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					}
 					h.SendToAllPlayers(gameID, data)
 					for {
-						if h.Games[gameID].CurrentStep == -1 && h.Games[gameID].CheckBets() {
+						if h.Games[gameID].CurrentStep == -1 {
 							h.Games[gameID].CurrentStep = h.Games[gameID].SmallBlindID
 							if f, pl := h.Games[gameID].CheckPlayers(gameID); !f {
 								_ = pl.SendMessage(map[string]interface{}{
@@ -154,7 +155,7 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 						}
 					}
 					if !h.Games[gameID].Live {
-						h.Games[gameID].OnFinish()
+						h.Games[gameID].ClearGame()
 						h.Games[gameID].Disable()
 						break GameLoop
 					}
@@ -174,12 +175,19 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					}
 					winnersStr := strings.Join(winnersName, ",")
 					log.Printf("Winners of game %s are: %s", gameID, winnersStr)
-					h.Games[gameID].OnFinish()
+					h.Games[gameID].ClearGame()
 
 					log.Printf("Game %s has been finished\n", gameID)
 					h.Games[gameID].Disable()
 				}
 
+				h.Games[gameID].Wait()
+				time.Sleep(7 * time.Second)
+				if player.Role == logic.SmallBlind {
+					h.Games[gameID].Add()
+					h.Games[gameID].RotateRoles()
+					h.Games[gameID].Disable()
+				}
 				h.Games[gameID].Wait()
 			}
 		}

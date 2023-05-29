@@ -5,11 +5,15 @@ const callButton = document.getElementById('button-call');
 const foldButton = document.getElementById('button-fold');
 
 callButton.addEventListener('click', function () {
+    let sum = Bet - players.get(4).CurrentBet
+    if (sum > players.get(4).Balance) {
+        sum = players.get(4).Balance
+    }
     if (curStep) {
         const data = `{
             "position" : ${playerPosition},
             "action" : "call",
-            "sum" : ${Bet - players.get(4).CurrentBet}
+            "sum" : ${sum}
         }`;
         SendMessage(data);
         curStep = false;
@@ -32,15 +36,17 @@ foldButton.addEventListener('click', function () {
 })
 
 raiseButton.addEventListener('click', function () {
-    let sum = prompt("Type your sum");
-    //todo : validate
+    let sum = 0
+    do {
+        sum = prompt("Type your sum");
+    } while (sum > players.get(4).Balance)
     if (sum && curStep) {
         curStep = false
         const data = `{
-            "position" : ${playerPosition},
-            "action" : "raise",
-            "sum" : ${sum}
-        }`;
+        "position" : ${playerPosition},
+        "action" : "raise",
+        "sum" : ${sum}
+    }`;
         SendMessage(data)
     }
 })

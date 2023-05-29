@@ -41,30 +41,51 @@ socket.addEventListener('message', (event) => {
         }
     }
 
+    else if (message["event"] === "distribution") {
+        gamePeriod = "preflop"
+
+        playerRole = message["role"]
+
+        if (playerRole === "small_blind") {
+            const data = `{
+            "position" : ${playerPosition},
+            "action" : "raise",
+            "sum" : ${smallBlindBet}
+        }`;
+            SendMessage(data);
+        }
+
+        clearAll()
+        inGame = true
+        changeCard("player_card1", message["cards"][0]);
+        changeCard("player_card2", message["cards"][1]);
+    }
+
     else if (message["event"] === "flop") {
+        gamePeriod="flop"
+
         clearBets()
-        console.log(players)
+
         changeCard("table1", message["cards"][0]);
         changeCard("table2", message["cards"][1]);
         changeCard("table3", message["cards"][2]);
     }
 
     else if (message["event"] === "turn") {
+        gamePeriod="turn"
+
         clearBets()
+
         changeCard("table4", message["card"]);
     }
 
     else if (message["event"] === "river") {
+        gamePeriod="river"
+
         clearBets()
         changeCard("table5", message["card"]);
     }
 
-    else if (message["event"] === "distribution") {
-        clearAll()
-        inGame = true
-        changeCard("player_card1", message["cards"][0]);
-        changeCard("player_card2", message["cards"][1]);
-    }
 
     else if (message["event"] === "gamePlayers") {
         for (const player of message["players"]) {
@@ -75,9 +96,9 @@ socket.addEventListener('message', (event) => {
                 changeElement(`player_${pos}_cur_bet`, player.CurrentBet)
                 players.set(pos, player)
                 if (player["Role"] === "small_blind") {
-                    if (player["Position"] === playerPosition) {
-                        curStep = true
-                    }
+                    // if (player["Position"] === playerPosition) {
+                    //     curStep = true
+                    // }
                     changeElement(`player_${pos}_status`, "Current")
                 } else {
                     changeElement(`player_${pos}_status`, "In Game")
@@ -86,15 +107,10 @@ socket.addEventListener('message', (event) => {
         }
     }
 
-    else if (message["event"] === "status") {
-        if (message["status"] === "WINNER") {
-            alert("Congratulations")
-        }
-        //todo : add bank
-    }
-
     else if (message["event"] === "step") {
-        changeElement(`player_${getGamePosition(message["pos"])}_status`, "Current")
+        if (message["pos"] !== -1) {
+            changeElement(`player_${getGamePosition(message["pos"])}_status`, "Current")
+        }
         if (message["pos"] === playerPosition) {
             curStep = true
         }
@@ -105,7 +121,17 @@ socket.addEventListener('message', (event) => {
         bet(getGamePosition(message["position"]), message["sum"])
         if (message["next"] !== -1) {
             if (message["next"] === playerPosition) {
-                curStep = true
+                if (gamePeriod === "preflop" && playerRole === "big_blind" && !betCompleted) {
+                    const data = `{
+                        "position" : ${playerPosition},
+                        "action" : "raise",
+                        "sum" : ${smallBlindBet * 2}
+                    }`;
+                    SendMessage(data);
+                    betCompleted = true;
+                } else {
+                    curStep = true
+                }
             }
             changeElement(`player_${getGamePosition(message["next"])}_status`, "Current")
         }
