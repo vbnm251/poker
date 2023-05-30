@@ -12,7 +12,6 @@ socket.addEventListener('open', (event) => {
         },
     }).then(response => response.json())
         .then(data => {
-            //todo: handle data
             for (const player of data["game"]) {
 
                 if (player){
@@ -29,7 +28,7 @@ socket.addEventListener('open', (event) => {
 
 socket.addEventListener('message', (event) => {
     const message = JSON.parse(event.data);
-    console.log(message)
+    console.log(message);
 
     if (message["event"] === "new_player") {
         if (message["player"]["username"] === username) {
@@ -116,6 +115,14 @@ socket.addEventListener('message', (event) => {
         }
     }
 
+    else if (message["event"] === "winners") {
+        for (const player of message["winners"]) {
+            const pos = getGamePosition(player["Position"])
+            changeElement(`player_${pos}_status`, "Winner")
+            changeElement(`player_${pos}_sum`, players.get(pos).Balance+=message["sum"])
+        }
+    }
+
     //game events: fold, call, raise
     else  {
         bet(getGamePosition(message["position"]), message["sum"])
@@ -139,7 +146,7 @@ socket.addEventListener('message', (event) => {
             changeElement(`player_${getGamePosition(message["position"])}_status`, "Out of game")
             return
         } else if (message["action"] === "raise") {
-            Bet = message["sum"]
+            Bet = players.get(getGamePosition(message["position"])).CurrentBet
             updateCallSum(Bet - players.get(4).CurrentBet)
         }
         changeElement(`player_${getGamePosition(message["position"])}_status`, "In Game")

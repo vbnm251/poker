@@ -43,7 +43,6 @@ function updateCallSum(sum) {
 }
 
 function  clearBets() {
-    console.log("CLeaning started")
     players.forEach(function (player, pos) {
         player.CurrentBet = 0
         changeElement(`player_${pos}_cur_bet`, 0);

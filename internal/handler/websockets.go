@@ -61,7 +61,7 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Player %s connected to game %s\n", player.Username, gameID)
 	defer func() {
 		if h.Games[gameID] != nil {
-			log.Println("DELETED", player.Username)
+			log.Printf("%s quited the game %s", player.Username, gameID)
 			h.Games[gameID].QuitGame(pos)
 		}
 	}()
@@ -69,21 +69,21 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 	// game logic
 	go func() {
 		for {
-
 		GameLoop:
 			for {
 				if h.Games[gameID].GetRealLength() >= 2 {
 					h.Games[gameID].Live = true
+					h.Games[gameID].Add()
 				} else {
 					h.Games[gameID].Live = false
 					break GameLoop
 				}
 
 				time.Sleep(200 * time.Millisecond)
+				//fmt.Println(player.Username, player.Role)
 
 				if player.Role == logic.SmallBlind {
 					log.Printf("Game %s has been started\n", gameID)
-					h.Games[gameID].Add()
 
 					// Preflop
 					h.Games[gameID].CalculateFirstStep()
@@ -96,99 +96,100 @@ func (h *Handler) WebsocketsEndpoint(w http.ResponseWriter, r *http.Request) {
 					}
 					h.SendToAllPlayers(gameID, data)
 					h.PeriodEnd(gameID)
-					if !h.Games[gameID].Live {
-						h.Games[gameID].ClearGame()
-						h.Games[gameID].Disable()
-						break GameLoop
+
+					if h.Games[gameID].Live {
+						// Flop
+						h.Games[gameID].FlopCards()
+						data = map[string]interface{}{
+							"event": "flop",
+							"cards": [3]logic.Card{
+								h.Games[gameID].Table[0],
+								h.Games[gameID].Table[1],
+								h.Games[gameID].Table[2],
+							},
+						}
+						h.SendToAllPlayers(gameID, data)
+						h.PeriodEnd(gameID)
 					}
 
-					// Flop
-					h.Games[gameID].FlopCards()
-					data = map[string]interface{}{
-						"event": "flop",
-						"cards": [3]logic.Card{
-							h.Games[gameID].Table[0],
-							h.Games[gameID].Table[1],
-							h.Games[gameID].Table[2],
-						},
-					}
-					h.SendToAllPlayers(gameID, data)
-					h.PeriodEnd(gameID)
-					if !h.Games[gameID].Live {
-						h.Games[gameID].ClearGame()
-						h.Games[gameID].Disable()
-						break GameLoop
+					if h.Games[gameID].Live {
+						// Turn
+						h.Games[gameID].TurnCard()
+						data = map[string]interface{}{
+							"event": "turn",
+							"card":  h.Games[gameID].Table[3],
+						}
+						h.SendToAllPlayers(gameID, data)
+						h.PeriodEnd(gameID)
 					}
 
-					// Turn
-					h.Games[gameID].TurnCard()
-					data = map[string]interface{}{
-						"event": "turn",
-						"card":  h.Games[gameID].Table[3],
-					}
-					h.SendToAllPlayers(gameID, data)
-					h.PeriodEnd(gameID)
-					if !h.Games[gameID].Live {
-						h.Games[gameID].ClearGame()
-						h.Games[gameID].Disable()
-						break GameLoop
-					}
+					if h.Games[gameID].Live {
+						// River
+						h.Games[gameID].RiverCard()
+						data = map[string]interface{}{
+							"event": "river",
+							"card":  h.Games[gameID].Table[4],
+						}
+						h.SendToAllPlayers(gameID, data)
+						for {
+							if h.Games[gameID].CurrentStep == -1 && h.Games[gameID].CheckBets() {
+								h.Games[gameID].CurrentStep = h.Games[gameID].SmallBlindID
+								if f, pl := h.Games[gameID].CheckPlayers(gameID); !f {
+									pl.Balance += h.Games[gameID].Bank
 
-					// River
-					h.Games[gameID].RiverCard()
-					data = map[string]interface{}{
-						"event": "river",
-						"card":  h.Games[gameID].Table[4],
-					}
-					h.SendToAllPlayers(gameID, data)
-					for {
-						if h.Games[gameID].CurrentStep == -1 {
-							h.Games[gameID].CurrentStep = h.Games[gameID].SmallBlindID
-							if f, pl := h.Games[gameID].CheckPlayers(gameID); !f {
-								_ = pl.SendMessage(map[string]interface{}{
-									"event": "winner",
-								})
-								h.Games[gameID].Live = false
-								break GameLoop
+									winners := []*logic.Player{pl}
+									data := map[string]interface{}{
+										"event":   "winners",
+										"winners": winners,
+										"sum":     h.Games[gameID].Bank,
+									}
+									h.SendToAllPlayers(gameID, data)
+									h.Games[gameID].Live = false
+								}
+								break
 							}
-							break
 						}
 					}
-					if !h.Games[gameID].Live {
-						h.Games[gameID].ClearGame()
-						h.Games[gameID].Disable()
-						break GameLoop
-					}
 
-					// The final
-					winners := h.Games[gameID].DefineWinners()
-					winnersName := make([]string, 0)
-					sum := h.Games[gameID].Bank / len(winners)
-					for _, player := range winners {
-						data := map[string]interface{}{
-							"event": "winner",
-							"sum":   sum,
+					if h.Games[gameID].Live {
+						// The final
+						winners := h.Games[gameID].DefineWinners()
+						winnersName := make([]string, 0)
+						sum := h.Games[gameID].Bank / len(winners)
+						for _, player := range winners {
+							winnersName = append(winnersName, player.Username)
+							_ = player.SendMessage(data)
+							h.Games[gameID].Players[player.Position].Balance += sum
 						}
-						winnersName = append(winnersName, player.Username)
-						_ = player.SendMessage(data)
-						h.Games[gameID].Players[player.Position].Balance += sum
+						data = map[string]interface{}{
+							"event":   "winners",
+							"winners": winners,
+							"sum":     sum,
+						}
+						h.SendToAllPlayers(gameID, data)
+						winnersStr := strings.Join(winnersName, ",")
+						log.Printf("Winners of game %s are: %s", gameID, winnersStr)
 					}
-					winnersStr := strings.Join(winnersName, ",")
-					log.Printf("Winners of game %s are: %s", gameID, winnersStr)
-					h.Games[gameID].ClearGame()
 
-					log.Printf("Game %s has been finished\n", gameID)
 					h.Games[gameID].Disable()
 				}
 
 				h.Games[gameID].Wait()
-				time.Sleep(7 * time.Second)
+
 				if player.Role == logic.SmallBlind {
 					h.Games[gameID].Add()
+				}
+
+				time.Sleep(5 * time.Second) //pause for players
+
+				if player.Role == logic.SmallBlind {
+					h.Games[gameID].ClearGame()
 					h.Games[gameID].RotateRoles()
 					h.Games[gameID].Disable()
 				}
+
 				h.Games[gameID].Wait()
+				//fmt.Println("BREAK", player.Username)
 			}
 		}
 

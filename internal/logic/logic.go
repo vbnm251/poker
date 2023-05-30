@@ -1,10 +1,23 @@
 /*
-	This file contains only game logic functions
+This package contains all classic poker logic
+
+The game:
+	1. Rotate game
+	2. Shuffle deck
+	3. Distribution
+	4. PreFlop: waiting for game' bets
+	5. Flop: waiting for game' bets
+	6. Turn: waiting for game' bets
+	7. River: waiting for game' bets
+	8. Congratulations winner
+
 */
 
 package logic
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 func (g *Game) Distribution() {
 	for i := range g.Players {

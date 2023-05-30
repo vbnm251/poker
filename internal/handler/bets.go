@@ -21,7 +21,7 @@ func (h *Handler) GetUserBest(gameID string, pos int, conn *websocket.Conn) erro
 		game.Bank += action.Sum
 		game.Players[pos].Balance -= action.Sum
 		if action.Action == logic.Raise {
-			game.CurrentBet = action.Sum
+			game.CurrentBet = game.Players[pos].CurrentBet
 			game.RaiseID = pos
 		}
 	}
@@ -40,11 +40,17 @@ func (h *Handler) PeriodEnd(gameID string) {
 	game := h.Games[gameID]
 
 	for {
-		if h.Games[gameID].CurrentStep == -1 {
+		if h.Games[gameID].CurrentStep == -1 && game.CheckBets() {
 			if f, pl := h.Games[gameID].CheckPlayers(gameID); !f {
-				_ = pl.SendMessage(map[string]interface{}{
-					"event": "winner",
-				})
+				pl.Balance += game.Bank
+
+				winners := []*logic.Player{pl}
+				data := map[string]interface{}{
+					"event":   "winners",
+					"winners": winners,
+					"sum":     h.Games[gameID].Bank,
+				}
+				h.SendToAllPlayers(gameID, data)
 				h.Games[gameID].Live = false
 			}
 			break
